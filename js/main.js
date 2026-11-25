@@ -69,17 +69,57 @@ function renderBlogPosts() {
 }
 
 // --- 3. ENVIO DO FORMULÁRIO DE CONTATO POR E-MAIL ---
+function formatBrazilPhone(value) {
+    const digits = (value || '').replace(/\D/g, '').slice(0, 11);
+    if (!digits) return '';
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const phoneInput = document.getElementById('contact-phone');
+    const messageInput = document.getElementById('contact-message');
+    const messageCount = document.getElementById('contact-message-count');
+
+    if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            e.target.value = formatBrazilPhone(e.target.value);
+        });
+    }
+
+    if (messageInput && messageCount) {
+        const updateCounter = () => {
+            messageCount.textContent = `${messageInput.value.length} / 2000 caracteres`;
+        };
+        messageInput.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+});
+
 async function submitContactForm(event) {
     event.preventDefault();
     const btn = document.getElementById('contact-submit-btn');
     const feedback = document.getElementById('contact-feedback');
     const form = document.getElementById('contact-form');
+    const messageCount = document.getElementById('contact-message-count');
 
-    const name = document.getElementById('contact-name').value.trim();
+    const name = document.getElementById('contact-name').value.trim().slice(0, 80);
     const email = document.getElementById('contact-email').value.trim();
-    const phone = document.getElementById('contact-phone').value.trim();
+    const phoneDigits = document.getElementById('contact-phone').value.replace(/\D/g, '').slice(0, 11);
+    const phone = formatBrazilPhone(phoneDigits);
     const subject = document.getElementById('contact-subject').value;
-    const message = document.getElementById('contact-message').value.trim();
+    const message = document.getElementById('contact-message').value.trim().slice(0, 2000);
+
+    document.getElementById('contact-phone').value = phone;
+
+    if (phoneDigits.length < 10) {
+        feedback.className = 'p-4 rounded-2xl bg-blush/80 border border-petal text-oliveDark text-xs sm:text-sm font-medium';
+        feedback.innerHTML = '<i class="fa-solid fa-circle-info mr-1.5 text-olive"></i> Por favor, informe um telefone válido com DDD (10 ou 11 dígitos).';
+        feedback.classList.remove('hidden');
+        return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Enviando mensagem...</span>';
@@ -108,6 +148,7 @@ async function submitContactForm(event) {
             feedback.innerHTML = '<i class="fa-solid fa-circle-check mr-1.5 text-olive"></i> Mensagem enviada com sucesso! Em breve retornaremos o seu contato.';
             feedback.classList.remove('hidden');
             form.reset();
+            if (messageCount) messageCount.textContent = '0 / 2000 caracteres';
         } else {
             throw new Error('Falha na resposta do serviço');
         }
