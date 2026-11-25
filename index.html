@@ -83,40 +83,36 @@
     </div>
 
     <!-- ==================== CABEÇALHO (COM IMAGEM DE FUNDO E MENUS) ==================== -->
-    <header class="sticky top-0 z-40 bg-transparent text-oliveDark pointer-events-none overflow-hidden min-h-[140px] sm:min-h-[155px]">
-        <!-- Imagem de fundo do cabeçalho alinhada à esquerda com o conteúdo da página -->
-           
-        <div class="absolute inset-0 max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-start justify-start pointer-events-none select-none">
+<header class="relative z-20 bg-headerCalm text-oliveDark pointer-events-none overflow-hidden min-h-[140px] sm:min-h-[155px]">
+    <!-- Imagem de fundo do cabeçalho alinhada à esquerda com o conteúdo da página -->
+    <div class="absolute inset-0 max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-start justify-start pointer-events-none select-none">
+        <img id="header-bg-img"
+            src="img/header.png"
+            alt=""
+            aria-hidden="true"
+            class="w-auto h-[100px] sm:h-[110px] max-w-full object-contain object-left-top mix-blend-multiply transition-opacity duration-500"
+            onerror="handleImageError(this, 'andrielly_custom_header_bg')">
 
-            <img id="header-bg-img"
-                src="img/header.png"
-                alt=""
-                aria-hidden="true"
-                class="w-auto h-[100px] sm:h-[110px] max-w-full object-contain object-left-top mix-blend-multiply transition-opacity duration-500"
-                onerror="handleImageError(this, 'andrielly_custom_header_bg')">
+        <p class="text-sm sm:text-base font-medium text-olive mt-0">
+            Fisioterapeuta Intensivista Neonatal e Pediátrica
+        </p>
+    </div>
 
-            <p class="text-sm sm:text-base font-medium text-olive mt-0">
-                Fisioterapeuta Intensivista Neonatal e Pediátrica
-            </p>
-
-        </div>   
-                
-
-        <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 pt-8 pb-3 flex items-center justify-center md:justify-end" bg-headerCalm>
-            <!-- Navegação das 3 Páginas -->
-            <nav class="pointer-events-auto flex items-center gap-2 sm:gap-3 bg-transparent w-full md:w-auto justify-center" aria-label="Navegação Principal">
-                <button id="nav-curriculo" onclick="switchPage('curriculo')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center bg-oliveSageBtn text-white shadow-sm border border-oliveSageBtn">
-                    Sobre &amp; Currículo
-                </button>
-                <button id="nav-blog" onclick="switchPage('blog')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center text-oliveDark/90 bg-cardLight/45 border border-transparent hover:bg-blush/85 hover:text-oliveDeep hover:border-petal/80 hover:shadow-sm hover:-translate-y-0.5">
-                    Posts &amp; Conteúdos
-                </button>
-                <button id="nav-contato" onclick="switchPage('contato')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center text-oliveDark/90 bg-cardLight/45 border border-transparent hover:bg-blush/85 hover:text-oliveDeep hover:border-petal/80 hover:shadow-sm hover:-translate-y-0.5">
-                    Contato
-                </button>
-            </nav>
-        </div>
-    </header>
+    <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 pt-8 pb-3 flex items-center justify-center md:justify-end">
+        <!-- Navegação das 3 Páginas -->
+        <nav class="pointer-events-auto flex items-center gap-2 sm:gap-3 bg-transparent w-full md:w-auto justify-center" aria-label="Navegação Principal">
+            <button id="nav-curriculo" onclick="switchPage('curriculo')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center bg-oliveSageBtn text-white shadow-sm border border-oliveSageBtn">
+                Sobre &amp; Currículo
+            </button>
+            <button id="nav-blog" onclick="switchPage('blog')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center text-oliveDark/90 bg-cardLight/45 border border-transparent hover:bg-blush/85 hover:text-oliveDeep hover:border-petal/80 hover:shadow-sm hover:-translate-y-0.5">
+                Posts &amp; Conteúdos
+            </button>
+            <button id="nav-contato" onclick="switchPage('contato')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center text-oliveDark/90 bg-cardLight/45 border border-transparent hover:bg-blush/85 hover:text-oliveDeep hover:border-petal/80 hover:shadow-sm hover:-translate-y-0.5">
+                Contato
+            </button>
+        </nav>
+    </div>
+</header>
 
     <!-- ==================== CONTEÚDO PRINCIPAL ==================== -->
     <main class="relative z-10 flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 pt-30 sm:pt-35 md:pt-10 pb-10">
