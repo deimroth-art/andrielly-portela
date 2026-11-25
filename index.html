@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andrielly Portela | Fisioterapeuta Intensivista Neonatal e Pediátrica</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts: Inter, Playfair Display & Great Vibes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Estilos Customizados -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Configuração de Cores e Fontes Customizadas no Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        script: ['Great Vibes', 'cursive'],
+                    },
+                    colors: {
+                        paper: '#FBF6F0',
+                        cardLight: '#FFFDFB',
+                        olive: '#687747',
+                        oliveDark: '#4D5A32',
+                        oliveDeep: '#3A4424',
+                        oliveSageBtn: '#5C6E3B',
+                        blush: '#F4DFDD',
+                        petal: '#E5BEB9',
+                        lavender: '#C8B8DA',
+                        headerCalm: '#FCF5EE',
+                        headerBorder: '#E5CECB',
+                        borderWarm: '#E8DDD3',
+                        inkMain: '#383A32',
+                        inkMuted: '#686A5E',
+                    },
+                    boxShadow: {
+                        'card-soft': '0 10px 30px -10px rgba(77, 90, 50, 0.08)',
+                    }
+                }
+            }
+        };
+
+        function handleImageError(imgElement, storageKey) {
+            if (!imgElement) return;
+            imgElement.onerror = null;
+            try {
+                const savedImg = localStorage.getItem(storageKey);
+                if (savedImg && imgElement.src !== savedImg) {
+                    imgElement.src = savedImg;
+                    imgElement.classList.remove('hidden');
+                    return;
+                }
+            } catch (e) {
+                console.warn('Acesso ao localStorage indisponível:', e);
+            }
+            imgElement.classList.add('hidden');
+        }
+    </script>
+</head>
+<body class="min-h-screen flex flex-col bg-paper text-inkMain selection:bg-petal/50 selection:text-oliveDeep relative">
+
+    <!-- ==================== IMAGEM DE FUNDO FIXA PERTO DO CABEÇALHO ==================== -->
+    <div id="fixed-bg-watermark" class="fixed top-10 inset-x-0 z-0 pointer-events-none flex justify-center overflow-hidden select-none">
+        <div class="w-full max-w-5xl px-2 sm:px-6 pt-16 sm:pt-14">
+            <img id="hero-logo-img"
+                 src="img/logo.jpeg"
+                 alt="Andrielly Portela - Arte Aquarela"
+                 class="w-full h-auto max-h-[440px] object-contain mx-auto opacity-40 sm:opacity-40 mix-blend-multiply bg-watermark-fade transition-opacity duration-500"
+                 onerror="handleImageError(this, 'andrielly_custom_hero_logo')">
+        </div>
+    </div>
+
+    <!-- ==================== CABEÇALHO (COM IMAGEM DE FUNDO E MENUS) ==================== -->
+    <header class="sticky top-0 z-40 bg-transparent text-oliveDark pointer-events-none overflow-hidden min-h-[140px] sm:min-h-[155px]">
+        <!-- Imagem de fundo do cabeçalho alinhada à esquerda com o conteúdo da página -->
+           
+        <div class="absolute inset-0 max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-start justify-start pointer-events-none select-none">
+
+            <img id="header-bg-img"
+                src="img/header.png"
+                alt=""
+                aria-hidden="true"
+                class="w-auto h-[100px] sm:h-[110px] max-w-full object-contain object-left-top mix-blend-multiply transition-opacity duration-500"
+                onerror="handleImageError(this, 'andrielly_custom_header_bg')">
+
+            <p class="text-sm sm:text-base font-medium text-olive mt-0">
+                Fisioterapeuta Intensivista Neonatal e Pediátrica
+            </p>
+
+        </div>   
+                
+
+        <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 pt-8 pb-3 flex items-center justify-center md:justify-end" bg-headerCalm>
+            <!-- Navegação das 3 Páginas -->
+            <nav class="pointer-events-auto flex items-center gap-2 sm:gap-3 bg-transparent w-full md:w-auto justify-center" aria-label="Navegação Principal">
+                <button id="nav-curriculo" onclick="switchPage('curriculo')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center bg-oliveSageBtn text-white shadow-sm border border-oliveSageBtn">
+                    Sobre &amp; Currículo
+                </button>
+                <button id="nav-blog" onclick="switchPage('blog')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center text-oliveDark/90 bg-cardLight/45 border border-transparent hover:bg-blush/85 hover:text-oliveDeep hover:border-petal/80 hover:shadow-sm hover:-translate-y-0.5">
+                    Posts &amp; Conteúdos
+                </button>
+                <button id="nav-contato" onclick="switchPage('contato')" class="nav-btn cursor-pointer px-4 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 text-center text-oliveDark/90 bg-cardLight/45 border border-transparent hover:bg-blush/85 hover:text-oliveDeep hover:border-petal/80 hover:shadow-sm hover:-translate-y-0.5">
+                    Contato
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ==================== CONTEÚDO PRINCIPAL ==================== -->
+    <main class="relative z-10 flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 pt-30 sm:pt-35 md:pt-10 pb-10">
+
+        <!-- ============================================================ -->
+        <!-- PÁGINA 1: SOBRE & CURRÍCULO                                  -->
+        <!-- ============================================================ -->
+        <section id="page-curriculo" class="page-section space-y-8">
+            <!-- Cartão de Apresentação Principal / Resumo Profissional -->
+            <div class="bg-cardLight/10 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-6 sm:p-10 shadow-card-soft space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-borderWarm/80 pb-6">
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-full bg-blush/80 text-oliveDark text-xs font-bold uppercase tracking-wider mb-2">
+                            Currículo &amp; Trajetória Profissional
+                        </span>
+                        <h1 class="font-serif text-2xl sm:text-4xl font-bold text-oliveDark">Andrielly Portela da Rocha Vaz Imroth</h1>
+                        <p class="text-sm sm:text-base font-medium text-olive mt-1">
+                            Fisioterapeuta Hospitalar • Neonatal e Pediátrica
+                        </p>
+                        <p class="text-xs text-inkMuted mt-1">
+                            <i class="fa-solid fa-location-dot mr-1 text-olive"></i>Curitiba - PR e região
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="switchPage('contato')" class="px-5 py-2.5 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-xs sm:text-sm font-semibold shadow-sm transition-all inline-flex items-center gap-2">
+                            <i class="fa-solid fa-envelope"></i>
+                            <span>Entrar em Contato</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-sm sm:text-base text-inkMain/90 leading-relaxed">
+                    <p>
+                        Fisioterapeuta com experiência em assistência hospitalar de alta complexidade em UTIs Neonatal, Pediátrica e Cirúrgica. Especialista em Fisioterapia Neonatal/Pediátrica e nos métodos Bobath Neuroevolutivo e PNF.
+                    </p>
+                    <p>
+                        Foco em avaliação contínua, reabilitação respiratória e motora, preceptoria clínica e atuação pautada em evidências científicas, com premiação nacional e artigos publicados na área.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Layout em Colunas (Masonry) para encaixar os cartões sem espaços vazios -->
+            <div class="columns-1 md:columns-2 gap-6 space-y-6">
+                <!-- Formação & Pós -->
+                <div class="break-inside-avoid bg-cardLight/30 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-6 sm:p-8 shadow-card-soft space-y-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-olive/15 text-oliveDark flex items-center justify-center">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <h2 class="font-serif text-xl sm:text-2xl font-bold text-oliveDark">Formação &amp; Pós-Graduação</h2>
+                    </div>
+
+                    <ul class="space-y-4 text-xs sm:text-sm">
+                        <li class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <p class="font-bold text-oliveDark">Pós-Graduação Neonatal e Pediátrica</p>
+                            <p class="text-olive font-semibold text-xs mt-0.5">PUCPR</p>
+                            <p class="text-inkMuted mt-1">Especialização em cuidados intensivos e assistência fisioterapêutica neonatal e pediátrica.</p>
+                        </li>
+                        <li class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <p class="font-bold text-oliveDark">Pós-Graduação Bobath Neuroevolutivo &amp; PNF</p>
+                            <p class="text-olive font-semibold text-xs mt-0.5">Especialização</p>
+                            <p class="text-inkMuted mt-1">Abordagem neuroevolutiva e Facilitação Neuromuscular Proprioceptiva aplicadas à reabilitação funcional.</p>
+                        </li>
+                        <li class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <p class="font-bold text-oliveDark">Bacharelado em Fisioterapia</p>
+                            <p class="text-olive font-semibold text-xs mt-0.5">UniBrasil Centro Universitário</p>
+                            <p class="text-inkMuted mt-1">Formação superior em Fisioterapia com atuação clínica, hospitalar e iniciação científica.</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Certificações -->
+                <div class="break-inside-avoid bg-cardLight/30 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-6 sm:p-8 shadow-card-soft space-y-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-lavender/35 text-oliveDark flex items-center justify-center">
+                            <i class="fa-solid fa-certificate"></i>
+                        </div>
+                        <h2 class="font-serif text-xl sm:text-2xl font-bold text-oliveDark">Certificações</h2>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">Instrutora Pilates (Voll)</span>
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">Paciente Hospitalar</span>
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">Dor Femoropatelar</span>
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">Diagnóstico Imagem</span>
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">Saúde da Mulher</span>
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">Primeiros Socorros</span>
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">Pacote Office</span>
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">LGPD na Saúde</span>
+                        <span class="px-3.5 py-2 rounded-xl bg-paper/55 border border-borderWarm/80 text-xs font-semibold text-oliveDark">Brigada de Incêndio</span>
+                    </div>
+                </div>
+
+                <!-- Experiência Profissional -->
+                <div class="break-inside-avoid bg-cardLight/30 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-6 sm:p-8 shadow-card-soft space-y-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-petal/40 text-oliveDark flex items-center justify-center">
+                            <i class="fa-solid fa-hospital"></i>
+                        </div>
+                        <h2 class="font-serif text-xl sm:text-2xl font-bold text-oliveDark">Experiência Profissional</h2>
+                    </div>
+
+                    <div class="space-y-3 text-xs sm:text-sm">
+                        <div class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <h3 class="font-bold text-oliveDark">Fisioterapeuta UTI Cirúrgica</h3>
+                            <p class="text-olive font-semibold text-xs mt-0.5">Hospital Pequeno Príncipe</p>
+                            <ul class="text-inkMain/85 mt-1.5 space-y-1 list-disc list-inside">
+                                <li>Avaliação e assistência fisioterapêutica contínua a pacientes críticos no pós-operatório;</li>
+                                <li>Condução de reabilitação respiratória, desmame ventilatório e mobilização motora precoce;</li>
+                                <li>Acompanhamento prático e preceptoria in loco para alunos da Pós-Graduação em Fisioterapia em Terapia Intensiva (Atuação Pediátrica e Neonatal), promovendo o desenvolvimento do raciocínio clínico com prática baseada em evidências no ambiente de UTI.</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <h3 class="font-bold text-oliveDark">Fisioterapeuta UTI Neo e Pediátrica</h3>
+                            <p class="text-olive font-semibold text-xs mt-0.5">Intensi Care (Hospital Angelina Caron)</p>
+                            <ul class="text-inkMain/85 mt-1.5 space-y-1 list-disc list-inside">
+                                <li>Assistência respiratória e motora especializada a recém-nascidos e crianças em estado crítico;</li>
+                                <li>Preceptoria e supervisão de acompanhamento prático em ambiente de UTI para alunos do curso de graduação em Fisioterapia.</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <h3 class="font-bold text-oliveDark">Estagiária em Fisioterapia Hospitalar</h3>
+                            <p class="text-olive font-semibold text-xs mt-0.5">Intensi Care (Hospital Angelina Caron)</p>
+                            <p class="text-inkMain/85 mt-1">Suporte no atendimento de pacientes internados em unidades adultas e pediátricas.</p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <h3 class="font-bold text-oliveDark">Instrutora de Pilates</h3>
+                            <p class="text-olive font-semibold text-xs mt-0.5">Ampla Pilates e Fisioterapia</p>
+                            <p class="text-inkMain/85 mt-1">Avaliação física e prescrição de exercícios terapêuticos individualizados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prêmio & Destaque + Pesquisa Científica & Publicações -->
+                <div class="break-inside-avoid bg-cardLight/30 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-6 sm:p-8 shadow-card-soft space-y-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-olive/15 text-oliveDark flex items-center justify-center">
+                            <i class="fa-solid fa-award"></i>
+                        </div>
+                        <h2 class="font-serif text-xl sm:text-2xl font-bold text-oliveDark">Prêmio &amp; Pesquisa Científica</h2>
+                    </div>
+
+                    <div class="space-y-3 text-xs sm:text-sm">
+                        <div class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <p class="font-bold text-oliveDark flex items-center gap-2">
+                                <i class="fa-solid fa-trophy text-olive"></i>
+                                <span>Menção Honrosa (3º Lugar) — CONAFIH</span>
+                            </p>
+                            <p class="text-inkMuted mt-1">Premiação na Categoria Enfermaria / Internação no Congresso Nacional de Fisioterapia Hospitalar.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <p class="font-bold text-oliveDark flex items-center gap-2">
+                                <i class="fa-solid fa-microscope text-olive"></i>
+                                <span>Iniciação Científica</span>
+                            </p>
+                            <p class="text-inkMuted mt-1">Pesquisadora de projetos em reabilitação respiratória no Hospital Angelina Caron e de métodos aquáticos (Ai-Chi/HIIT) na UniBrasil.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-paper/45 border border-borderWarm/80">
+                            <p class="font-bold text-oliveDark flex items-center gap-2">
+                                <i class="fa-solid fa-book-medical text-olive"></i>
+                                <span>Publicações em Anais</span>
+                            </p>
+                            <p class="text-inkMuted mt-1">Autora de artigos sobre função pulmonar e qualidade de vida em pacientes dialíticos e pós-transplante renal apresentados no 13º Congresso Internacional de Fisioterapia e EVINCI.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- PÁGINA 2: POSTS & CONTEÚDOS (PUBLICAÇÕES LINKEDIN)           -->
+        <!-- ============================================================ -->
+        <section id="page-blog" class="page-section hidden space-y-8">
+            <div class="bg-cardLight/30 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-6 sm:p-8 shadow-card-soft flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-olive">Ciência, Cuidado &amp; Família</span>
+                    <h1 class="font-serif text-2xl sm:text-3xl font-bold text-oliveDark mt-1">
+                        Publicações &amp; Conteúdos
+                    </h1>
+                    <p class="text-xs sm:text-sm text-inkMain/85 mt-1">
+                        Acompanhe artigos, compartilhamentos e atualizações profissionais diretamente do LinkedIn sobre fisioterapia intensiva neonatal, pediátrica e desenvolvimento infantil.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <a href="https://www.linkedin.com/in/andrielly-portela-254b26196" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 rounded-xl bg-[#0A66C2] hover:bg-[#084d92] text-white text-xs sm:text-sm font-semibold shadow-sm transition-all inline-flex items-center gap-2">
+                        <i class="fa-brands fa-linkedin text-base"></i>
+                        <span>Acompanhar no LinkedIn</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Colunas (Masonry) de Publicações Incorporadas do LinkedIn (Lidas de js/posts.js) -->
+            <div id="blog-posts-container" class="columns-1 lg:columns-2 gap-6 space-y-6 max-w-[1110px] mx-auto"></div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- PÁGINA 3: CONTATO                                            -->
+        <!-- ============================================================ -->
+        <section id="page-contato" class="page-section hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                
+                <!-- Coluna Esquerda: Informações Institucionais -->
+                <div class="lg:col-span-2 bg-cardLight/30 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-6 sm:p-8 shadow-card-soft flex flex-col justify-between space-y-6">
+                    <div class="space-y-4">
+                        <span class="text-xs font-bold uppercase tracking-widest text-olive">Atendimento &amp; Parcerias</span>
+                        <h1 class="font-serif text-2xl sm:text-3xl font-bold text-oliveDark">Entre em Contato</h1>
+                        <p class="text-xs sm:text-sm text-inkMain/85 leading-relaxed">
+                            Para informações sobre atuação clínica em fisioterapia intensiva neonatal e pediátrica, reabilitação respiratória e neurofuncional, consultorias ou convites científicos, envie sua mensagem pelo formulário ao lado.
+                        </p>
+                    </div>
+
+                    <div class="space-y-4 pt-2">
+                        <!-- Localização -->
+                        <div class="p-4 rounded-2xl bg-paper/40 border border-borderWarm/80 flex items-start gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-olive/15 text-oliveDark flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-location-dot"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-inkMuted">Localização</p>
+                                <p class="text-sm font-semibold text-inkMain mt-0.5">Curitiba - PR e região</p>
+                            </div>
+                        </div>
+
+                        <!-- LinkedIn -->
+                        <a href="https://www.linkedin.com/in/andrielly-portela-254b26196" target="_blank" rel="noopener noreferrer" class="p-4 rounded-2xl bg-paper/40 hover:bg-blush/50 border border-borderWarm/80 flex items-center justify-between gap-3.5 transition-all group">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-[#0A66C2]/10 text-[#0A66C2] flex items-center justify-center shrink-0">
+                                    <i class="fa-brands fa-linkedin-in text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-wider text-inkMuted">Perfil Profissional</p>
+                                    <p class="text-sm font-semibold text-inkMain group-hover:text-oliveDark transition-colors">LinkedIn — Andrielly Portela</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-inkMuted group-hover:text-oliveDark"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita: Formulário de Envio Direto por E-mail -->
+                <div class="lg:col-span-3 bg-cardLight/30 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-6 sm:p-8 shadow-card-soft">
+                    <h2 class="font-serif text-xl sm:text-2xl font-bold text-oliveDark mb-1">Enviar Mensagem</h2>
+                    <p class="text-xs sm:text-sm text-inkMain/85 mb-6">Preencha os campos abaixo para encaminhar sua solicitação diretamente.</p>
+
+                    <form id="contact-form" onsubmit="submitContactForm(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="contact-name" class="block text-xs font-semibold text-oliveDark mb-1.5">Nome Completo *</label>
+                                <input type="text" id="contact-name" name="name" required placeholder="Seu nome" class="w-full px-4 py-3 rounded-xl bg-paper/50 border border-borderWarm text-sm focus:outline-none focus:border-olive transition-colors">
+                            </div>
+                            <div>
+                                <label for="contact-email" class="block text-xs font-semibold text-oliveDark mb-1.5">Seu E-mail *</label>
+                                <input type="email" id="contact-email" name="email" required placeholder="seuemail@exemplo.com" class="w-full px-4 py-3 rounded-xl bg-paper/50 border border-borderWarm text-sm focus:outline-none focus:border-olive transition-colors">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="contact-phone" class="block text-xs font-semibold text-oliveDark mb-1.5">Telefone / WhatsApp *</label>
+                                <input type="tel" id="contact-phone" name="phone" required placeholder="(41) 99999-9999" class="w-full px-4 py-3 rounded-xl bg-paper/50 border border-borderWarm text-sm focus:outline-none focus:border-olive transition-colors">
+                            </div>
+                            <div>
+                                <label for="contact-subject" class="block text-xs font-semibold text-oliveDark mb-1.5">Assunto *</label>
+                                <select id="contact-subject" name="subject" class="w-full px-4 py-3 rounded-xl bg-paper/50 border border-borderWarm text-sm focus:outline-none focus:border-olive transition-colors">
+                                    <option value="Fisioterapia Intensiva Neonatal e Pediátrica">Fisioterapia Intensiva Neonatal e Pediátrica</option>
+                                    <option value="Fisioterapia Respiratória Pediátrica">Fisioterapia Respiratória Pediátrica</option>
+                                    <option value="Reabilitação Neurofuncional / Bobath">Reabilitação Neurofuncional / Bobath</option>
+                                    <option value="Convite Científico / Palestra">Convite Científico / Palestra</option>
+                                    <option value="Outros Assuntos">Outros Assuntos</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="contact-message" class="block text-xs font-semibold text-oliveDark mb-1.5">Mensagem *</label>
+                            <textarea id="contact-message" name="message" rows="4" required placeholder="Descreva brevemente como posso ajudar..." class="w-full px-4 py-3 rounded-xl bg-paper/50 border border-borderWarm text-sm focus:outline-none focus:border-olive transition-colors"></textarea>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" id="contact-submit-btn" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-sm font-semibold shadow-sm transition-all inline-flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Enviar Mensagem</span>
+                            </button>
+                        </div>
+
+                        <!-- Feedback de Envio -->
+                        <div id="contact-feedback" class="hidden p-4 rounded-2xl text-xs sm:text-sm font-medium"></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== RODAPÉ ==================== -->
+    <footer class="relative z-40 overflow-hidden bg-transparent text-oliveDark">
+        <!-- Imagem de fundo suave do rodapé alinhada com o conteúdo da página -->
+        <div class="absolute inset-x-0 bottom-5 top-1 max-w-20xl mx-auto px-1 sm:px-6 flex items-end justify-center pointer-events-none select-none">
+            <img id="footer-bg-img"
+                 src="img/footer.jpeg"
+                 alt=""
+                 aria-hidden="true"
+                 class="w-full h-full object-contain object-bottom opacity-90 mix-blend-multiply transition-opacity duration-500"
+                 onerror="handleImageError(this, 'andrielly_custom_footer_bg')">
+        </div>
+
+        <!-- Camada leve para preservar o contraste da leitura -->
+        <div class="absolute inset-0 bg-gradient-to-b from-headerCalm/45 via-transparent to-transparent pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-24 sm:pt-7 sm:pb-28">
+            
+        </div>
+
+        <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-1 text-center text-[11px] text-oliveDark/85 font-medium drop-shadow-[0_1px_1px_rgba(255,255,255,0.7)]">
+            &copy; <span id="current-year"></span> Andrielly Portela • Todos os direitos reservados.
+        </div>
+    </footer>
+
+    <!-- ==================== ARQUIVOS JAVASCRIPT SEPARADOS ==================== -->
+    <!-- 1º Carrega apenas a lista de posts do LinkedIn (arquivo exclusivo para edição fácil) -->
+    <script src="js/posts.js"></script>
+    <!-- 2º Carrega a lógica principal do site -->
+    <script src="js/main.js"></script>
+</body>
+</html>
