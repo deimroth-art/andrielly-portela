@@ -1,0 +1,35 @@
+/* ==========================================================================
+   ESTILOS CUSTOMIZADOS - ANDRIELLY PORTELA
+   ========================================================================== */
+
+body {
+    background-color: #FDEEE7;
+    color: #383A32;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+/* Scrollbar personalizada harmonizada com a paleta aquarela */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #FBF6F0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #C8B8DA;
+    border-radius: 9999px;
+    border: 2px solid #FBF6F0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #687747;
+}
+
+/* Integração aquarelada da imagem fixa no fundo perto do cabeçalho */
+.bg-watermark-fade {
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.92) 88%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.92) 88%, transparent 100%);
+}
