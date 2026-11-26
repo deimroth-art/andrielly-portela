@@ -20,6 +20,10 @@
    ========================================================================== */
 
 const LINKEDIN_EMBEDS = [
+       {
+        embedUrl: "https://www.linkedin.com/embed/feed/update/urn:li:share:6949100692422676480",
+        height: 620
+    },
     {
         embedUrl: "https://www.linkedin.com/embed/feed/update/urn:li:share:6949100692422676480",
         height: 620
