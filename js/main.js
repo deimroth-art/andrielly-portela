@@ -544,9 +544,44 @@ async function deletePost(postId) {
     loadPublicPosts();
 }
 
+function buildSocialEmbedUrl(rede, rawUrl) {
+    try {
+        const cleanUrl = rawUrl.split('?')[0].replace(/\/+$/, '');
+
+        if (rede === 'linkedin') {
+            if (cleanUrl.includes('/embed/feed/update/')) return rawUrl;
+            const urnMatch = rawUrl.match(/urn:li:(activity|ugcPost|share):\d+/i);
+            if (urnMatch) {
+                return `https://www.linkedin.com/embed/feed/update/${urnMatch[0]}`;
+            }
+            const activityIdMatch = cleanUrl.match(/activity-(\d+)/i) || cleanUrl.match(/(\d{15,25})/);
+            if (activityIdMatch) {
+                return `https://www.linkedin.com/embed/feed/update/urn:li:activity:${activityIdMatch[1]}`;
+            }
+        }
+
+        if (rede === 'instagram') {
+            const igMatch = cleanUrl.match(/instagram\.com\/(p|reel|tv)\/([^/]+)/i);
+            if (igMatch) {
+                return `https://www.instagram.com/${igMatch[1]}/${igMatch[2]}/embed`;
+            }
+        }
+
+        if (rede === 'facebook') {
+            return `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(rawUrl)}&show_text=true&width=500`;
+        }
+    } catch (e) {
+        console.warn('Não foi possível converter URL para embed:', e);
+    }
+    return null;
+}
+
 async function loadPublicPosts() {
     const container = document.getElementById('blog-posts-container');
     if (!container || !supabaseClient) return;
+
+    // Remove renderizações anteriores vindas do banco para evitar duplicidade ao publicar
+    container.querySelectorAll('.dynamic-supabase-post').forEach((el) => el.remove());
 
     const { data: posts } = await supabaseClient
         .from('posts')
@@ -556,25 +591,46 @@ async function loadPublicPosts() {
 
     if (!posts || posts.length === 0) return;
 
-    const icons = {
-        instagram: 'fa-brands fa-instagram',
-        linkedin: 'fa-brands fa-linkedin',
-        facebook: 'fa-brands fa-facebook'
+    const heights = {
+        linkedin: 'h-[540px]',
+        instagram: 'h-[580px]',
+        facebook: 'h-[520px]'
     };
 
-    const dynamicHtml = posts.map((p) => `
-        <a href="${p.url_post}" target="_blank" rel="noopener"
-           class="break-inside-avoid block p-5 rounded-3xl bg-cardLight/80 hover:bg-cardLight border border-borderWarm shadow-card-soft transition">
-            <div class="flex items-center justify-between text-xs text-olive font-bold uppercase mb-2">
-                <span><i class="${icons[p.rede_social] || 'fa-solid fa-share'} mr-1"></i> ${p.rede_social}</span>
-                <span>${new Date(p.created_at).toLocaleDateString('pt-BR')}</span>
-            </div>
-            <p class="font-bold text-oliveDark text-sm">${p.titulo || 'Ver publicação original'}</p>
-            <span class="inline-block mt-3 text-xs text-olive font-semibold">Abrir postagem <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i></span>
-        </a>
-    `).join('');
+    const dynamicHtml = posts.map((p) => {
+        const embedUrl = buildSocialEmbedUrl(p.rede_social, p.url_post);
+
+        if (embedUrl) {
+            return `
+                <article class="dynamic-supabase-post break-inside-avoid bg-cardLight/80 rounded-3xl border border-borderWarm shadow-card-soft overflow-hidden">
+                    ${p.titulo ? `
+                        <div class="px-5 pt-4 pb-2 flex items-center justify-between gap-2 border-b border-borderWarm/60">
+                            <p class="font-bold text-oliveDark text-xs sm:text-sm">${p.titulo}</p>
+                            <a href="${p.url_post}" target="_blank" rel="noopener noreferrer" title="Abrir original" class="text-xs text-olive hover:text-oliveDark shrink-0">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    ` : ''}
+                    <iframe
+                        src="${embedUrl}"
+                        class="w-full ${heights[p.rede_social] || 'h-[540px]'} border-0 bg-white"
+                        loading="lazy"
+                        allowfullscreen
+                        title="${p.titulo || 'Publicação incorporada'}">
+                    </iframe>
+                </article>
+            `;
+        }
+
+        return `
+            <a href="${p.url_post}" target="_blank" rel="noopener noreferrer"
+               class="dynamic-supabase-post break-inside-avoid block p-5 rounded-3xl bg-cardLight/80 hover:bg-cardLight border border-borderWarm shadow-card-soft transition">
+                <span class="text-xs text-olive font-bold uppercase">${p.rede_social}</span>
+                <p class="font-bold text-oliveDark text-sm mt-1">${p.titulo || 'Ver publicação original'}</p>
+                <span class="inline-block mt-3 text-xs text-olive font-semibold">Abrir postagem <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i></span>
+            </a>
+        `;
+    }).join('');
 
     container.insertAdjacentHTML('afterbegin', dynamicHtml);
 }
-
-document.addEventListener('DOMContentLoaded', loadPublicPosts);
