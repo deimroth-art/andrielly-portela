@@ -417,6 +417,145 @@
                 </div>
             </div>
         </section>
+
+        <!-- ============================================================ -->
+        <!-- ÁREA INTERNA DO SISTEMA (DASHBOARD & POSTS 90 DIAS)           -->
+        <!-- ============================================================ -->
+        <section id="app-system-section" class="hidden relative min-h-[75vh] rounded-3xl overflow-hidden border border-borderWarm/80 shadow-card-soft bg-cardLight/85 backdrop-blur-xs p-6 sm:p-10 space-y-6">
+            <!-- Logo ao fundo -->
+            <div class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08]">
+                <img id="dashboard-bg-logo" src="img/logo.jpeg" alt="Marca d'água" class="max-w-md w-3/4 object-contain rounded-full" onerror="handleImageError(this, 'andrielly_custom_hero_logo')">
+            </div>
+
+            <div class="relative z-10 space-y-6">
+                <!-- Cabeçalho do Painel -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-borderWarm/80">
+                    <div>
+                        <span id="sys-role-badge" class="inline-block px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blush/80 text-oliveDark mb-1">
+                            Painel do Sistema
+                        </span>
+                        <h2 id="sys-welcome-title" class="font-serif text-2xl sm:text-3xl font-bold text-oliveDark">
+                            Bem-vindo(a)
+                        </h2>
+                        <p id="sys-clinic-name" class="text-xs sm:text-sm text-olive font-medium">Carregando clínica...</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" onclick="switchSystemTab('dashboard')" class="cursor-pointer px-4 py-2 rounded-xl text-xs font-bold bg-oliveSageBtn text-white hover:bg-oliveDark transition">
+                            <i class="fa-solid fa-house mr-1"></i> Início
+                        </button>
+                        <button type="button" onclick="exitSystemToPublicSite()" class="cursor-pointer px-4 py-2 rounded-xl text-xs font-bold bg-paper/80 text-oliveDark border border-borderWarm hover:bg-blush/70 transition">
+                            <i class="fa-solid fa-globe mr-1"></i> Ver Vitrine Pública
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SUBTELA 1: DASHBOARD INICIAL -->
+                <div id="sys-view-dashboard" class="space-y-6">
+                    <!-- Dados exclusivos do CLIENTE -->
+                    <div id="client-dashboard-cards" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-5 rounded-2xl bg-paper/80 border border-borderWarm">
+                            <p class="text-xs font-bold uppercase tracking-wider text-olive mb-2">
+                                <i class="fa-solid fa-user mr-1"></i> Dados Pessoais
+                            </p>
+                            <p id="cli-dash-nome" class="font-bold text-oliveDark text-sm">-</p>
+                            <p id="cli-dash-contato" class="text-xs text-inkMain/80 mt-1">-</p>
+                            <p id="cli-dash-endereco" class="text-xs text-inkMuted mt-1">-</p>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-paper/80 border border-borderWarm">
+                            <p class="text-xs font-bold uppercase tracking-wider text-olive mb-2">
+                                <i class="fa-solid fa-spa mr-1"></i> Plano Atual
+                            </p>
+                            <p id="cli-dash-plano" class="font-bold text-oliveDark text-sm">Nenhum plano ativo</p>
+                            <p id="cli-dash-sessoes" class="text-xs text-inkMain/80 mt-1">Sessões restantes: 0</p>
+                            <p id="cli-dash-reposicao" class="text-xs text-inkMuted mt-1">Créditos de reposição: 0</p>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-paper/80 border border-borderWarm">
+                            <p class="text-xs font-bold uppercase tracking-wider text-olive mb-2">
+                                <i class="fa-solid fa-calendar-check mr-1"></i> Próximo Pagamento
+                            </p>
+                            <p id="cli-dash-vencimento" class="font-bold text-oliveDark text-sm">Sem cobranças pendentes</p>
+                            <p id="cli-dash-valor" class="text-xs text-inkMain/80 mt-1">-</p>
+                            <p id="cli-dash-status-pag" class="text-xs text-inkMuted mt-1">-</p>
+                        </div>
+                    </div>
+
+                    <!-- Atalhos de acordo com as permissões do perfil -->
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-inkMuted mb-3">
+                            Telas Disponíveis para o seu Perfil
+                        </h3>
+                        <div id="dashboard-modules-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    </div>
+                </div>
+
+                <!-- SUBTELA 2: GESTÃO DE CONTEÚDOS / POSTS (90 DIAS - ADM) -->
+                <div id="sys-view-posts" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <form id="new-post-form" onsubmit="handleCreatePost(event)" class="lg:col-span-2 p-6 rounded-2xl bg-paper/80 border border-borderWarm space-y-4">
+                            <h3 class="font-serif text-xl font-bold text-oliveDark">Publicar Novo Post (Vigência de 90 Dias)</h3>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-oliveDark mb-1.5">Rede Social *</label>
+                                    <select id="post-network" required class="w-full px-4 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm text-inkMain focus:outline-none focus:border-olive">
+                                        <option value="instagram">Instagram</option>
+                                        <option value="linkedin">LinkedIn</option>
+                                        <option value="facebook">Facebook</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-oliveDark mb-1.5">Título / Descrição Curta (Opcional)</label>
+                                    <input type="text" id="post-title" maxlength="120" placeholder="Ex.: Cuidados respiratórios em bebês" class="w-full px-4 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm text-inkMain focus:outline-none focus:border-olive">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-oliveDark mb-1.5">Link Comum da Postagem *</label>
+                                <input type="url" id="post-url" required placeholder="https://www.instagram.com/p/..." class="w-full px-4 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm text-inkMain focus:outline-none focus:border-olive">
+                            </div>
+
+                            <div id="post-feedback" class="hidden"></div>
+
+                            <button type="submit" id="post-submit-btn" class="cursor-pointer px-6 py-3 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-xs sm:text-sm font-semibold transition">
+                                <i class="fa-solid fa-plus mr-1"></i> Publicar na Vitrine (90 dias)
+                            </button>
+                        </form>
+
+                        <!-- Instruções de como copiar o link -->
+                        <div class="p-6 rounded-2xl bg-blush/50 border border-petal/80 space-y-3 text-xs text-inkMain">
+                            <h4 class="font-bold text-sm text-oliveDark flex items-center gap-2">
+                                <i class="fa-solid fa-circle-info text-olive"></i> Como copiar o link da postagem
+                            </h4>
+                            <ul class="space-y-2 leading-relaxed">
+                                <li><strong>Instagram:</strong> Abra o post público, toque nos três pontinhos (<strong>•••</strong>) ou em compartilhar e toque em <strong>Copiar link</strong>.</li>
+                                <li><strong>LinkedIn:</strong> Clique nos três pontinhos (<strong>•••</strong>) no canto superior direito do post e selecione <strong>Copiar link da publicação</strong>.</li>
+                                <li><strong>Facebook:</strong> Clique em <strong>Compartilhar</strong> na publicação e escolha <strong>Copiar link</strong>.</li>
+                            </ul>
+                            <p class="pt-2 border-t border-petal/80 text-oliveDark/90">
+                                <strong>Validade de 90 dias:</strong> Após 90 dias, o post sai automaticamente da vitrine e é excluído do banco de dados.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="p-6 rounded-2xl bg-paper/80 border border-borderWarm">
+                        <h3 class="font-bold text-sm uppercase tracking-wider text-oliveDark mb-4">Posts Ativos (Contagem de 90 Dias)</h3>
+                        <div id="admin-posts-list" class="space-y-3 text-xs sm:text-sm">
+                            Carregando publicações...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBTELA 3: PRÓXIMOS MÓDULOS -->
+                <div id="sys-view-placeholder" class="hidden p-8 rounded-2xl bg-paper/80 border border-borderWarm text-center space-y-2">
+                    <h3 id="placeholder-title" class="font-serif text-2xl font-bold text-oliveDark">Módulo</h3>
+                    <p class="text-xs sm:text-sm text-inkMain/80">As tabelas já estão criadas no Supabase; construiremos esta tela na próxima etapa.</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- ==================== RODAPÉ ==================== -->
@@ -550,7 +689,10 @@
                     </button>
                 </form>
             </div>
-
+            <button type="button" onclick="enterSystemDashboard()" class="cursor-pointer w-full py-3 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-xs sm:text-sm font-semibold shadow-sm transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-table-columns"></i>
+                <span>Abrir Painel do Sistema</span>
+            </button>
             <button type="button" onclick="handleSupabaseLogout()" class="cursor-pointer w-full py-3 rounded-xl bg-blush/70 hover:bg-blush text-oliveDark border border-petal text-xs sm:text-sm font-semibold transition-all">
                 <i class="fa-solid fa-right-from-bracket mr-1.5"></i> Sair da Conta
             </button>
