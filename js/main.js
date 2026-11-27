@@ -209,11 +209,13 @@ async function refreshAuthState() {
     }
 
     // Busca os dados e permissões do perfil logado na tabela profiles
-    const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('nome, tipo_perfil, is_adm, is_master, clinica_id')
-        .eq('id', session.user.id)
-        .single();
+const { data: profile, error: profileError } = await supabaseClient
+    .from('profiles')
+    .select('nome, tipo_perfil, is_adm, is_master, clinica_id')
+    .eq('id', session.user.id)
+    .single();
+
+console.log('Perfil carregado:', profile, 'Erro:', profileError);
 
     const isMaster = profile?.is_master === true;
     const isAdm = profile?.is_adm === true || profile?.tipo_perfil === 'super_adm';
