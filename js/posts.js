@@ -19,9 +19,4 @@
    do texto/imagem da publicação para não sobrar espaço em branco.
    ========================================================================== */
 
-const LINKEDIN_EMBEDS = [
-{
-        embedUrl: "https://www.linkedin.com/embed/feed/update/urn:li:share:6949100692422676480",
-        height: 620
-    }
-];
+const LINKEDIN_POSTS = [];
