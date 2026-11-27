@@ -580,16 +580,20 @@ async function loadPublicPosts() {
     const container = document.getElementById('blog-posts-container');
     if (!container || !supabaseClient) return;
 
-    // Remove renderizações anteriores vindas do banco para evitar duplicidade ao publicar
     container.querySelectorAll('.dynamic-supabase-post').forEach((el) => el.remove());
 
-    const { data: posts } = await supabaseClient
+    const { data: posts, error } = await supabaseClient
         .from('posts')
-        .select('rede_social, titulo, url_post, created_at')
-        .gt('expires_at', new Date().toISOString())
+        .select('id, rede_social, titulo, url_post, created_at, expires_at')
         .order('created_at', { ascending: false });
 
-    if (!posts || posts.length === 0) return;
+    console.log('Posts públicos retornados:', posts, 'Erro:', error);
+
+    if (error || !posts || posts.length === 0) return;
+
+    const nowMs = Date.now();
+    const activePosts = posts.filter((p) => !p.expires_at || new Date(p.expires_at).getTime() > nowMs);
+    if (activePosts.length === 0) return;
 
     const heights = {
         linkedin: 'h-[540px]',
@@ -597,20 +601,30 @@ async function loadPublicPosts() {
         facebook: 'h-[520px]'
     };
 
-    const dynamicHtml = posts.map((p) => {
-        const embedUrl = buildSocialEmbedUrl(p.rede_social, p.url_post);
+    const icons = {
+        instagram: 'fa-brands fa-instagram',
+        linkedin: 'fa-brands fa-linkedin',
+        facebook: 'fa-brands fa-facebook'
+    };
+
+    const dynamicHtml = activePosts.map((p) => {
+        const embedUrl = typeof buildSocialEmbedUrl === 'function'
+            ? buildSocialEmbedUrl(p.rede_social, p.url_post)
+            : null;
 
         if (embedUrl) {
             return `
-                <article class="dynamic-supabase-post break-inside-avoid bg-cardLight/80 rounded-3xl border border-borderWarm shadow-card-soft overflow-hidden">
-                    ${p.titulo ? `
-                        <div class="px-5 pt-4 pb-2 flex items-center justify-between gap-2 border-b border-borderWarm/60">
-                            <p class="font-bold text-oliveDark text-xs sm:text-sm">${p.titulo}</p>
-                            <a href="${p.url_post}" target="_blank" rel="noopener noreferrer" title="Abrir original" class="text-xs text-olive hover:text-oliveDark shrink-0">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                            </a>
-                        </div>
-                    ` : ''}
+                <article class="dynamic-supabase-post break-inside-avoid bg-cardLight/85 rounded-3xl border border-borderWarm shadow-card-soft overflow-hidden">
+                    <div class="px-5 py-3 flex items-center justify-between gap-2 border-b border-borderWarm/60 bg-paper/50">
+                        <span class="text-xs font-bold uppercase text-olive">
+                            <i class="${icons[p.rede_social] || 'fa-solid fa-share-nodes'} mr-1"></i> ${p.rede_social}
+                        </span>
+                        <a href="${p.url_post}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-olive hover:text-oliveDark inline-flex items-center gap-1">
+                            <span>Abrir original</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                    ${p.titulo ? `<p class="px-5 pt-3 font-bold text-oliveDark text-xs sm:text-sm">${p.titulo}</p>` : ''}
                     <iframe
                         src="${embedUrl}"
                         class="w-full ${heights[p.rede_social] || 'h-[540px]'} border-0 bg-white"
@@ -623,12 +637,17 @@ async function loadPublicPosts() {
         }
 
         return `
-            <a href="${p.url_post}" target="_blank" rel="noopener noreferrer"
-               class="dynamic-supabase-post break-inside-avoid block p-5 rounded-3xl bg-cardLight/80 hover:bg-cardLight border border-borderWarm shadow-card-soft transition">
-                <span class="text-xs text-olive font-bold uppercase">${p.rede_social}</span>
-                <p class="font-bold text-oliveDark text-sm mt-1">${p.titulo || 'Ver publicação original'}</p>
-                <span class="inline-block mt-3 text-xs text-olive font-semibold">Abrir postagem <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i></span>
-            </a>
+            <article class="dynamic-supabase-post break-inside-avoid p-5 rounded-3xl bg-cardLight/85 border border-borderWarm shadow-card-soft space-y-2">
+                <div class="flex items-center justify-between text-xs text-olive font-bold uppercase">
+                    <span><i class="${icons[p.rede_social] || 'fa-solid fa-share-nodes'} mr-1"></i> ${p.rede_social}</span>
+                    <span>${new Date(p.created_at).toLocaleDateString('pt-BR')}</span>
+                </div>
+                <p class="font-bold text-oliveDark text-sm">${p.titulo || 'Publicação compartilhada'}</p>
+                <a href="${p.url_post}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-semibold text-olive hover:text-oliveDark underline break-all">
+                    <span>Acessar postagem</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+            </article>
         `;
     }).join('');
 
