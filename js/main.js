@@ -162,6 +162,148 @@ async function submitContactForm(event) {
     }
 }
 
+// --- 4. AUTENTICAÇÃO E GESTÃO DE USUÁRIOS (SUPABASE) ---
+const SUPABASE_URL = 'https://idwtcmdpnolkcnwfrmqp.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_WiIwRGkoNfXJfKOHfSTfwg_kPwbkJLW';
+const supabaseClient = window.supabase
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+function openLoginModal() {
+    const modal = document.getElementById('login-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    refreshAuthState();
+}
+
+function closeLoginModal() {
+    const modal = document.getElementById('login-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function handleModalBackdropClick(event) {
+    if (event.target.id === 'login-modal') {
+        closeLoginModal();
+    }
+}
+
+function toggleAuthView(view) {
+    ['login', 'recovery', 'account'].forEach((name) => {
+        const el = document.getElementById(`auth-view-${name}`);
+        if (el) el.classList.toggle('hidden', name !== view);
+    });
+}
+
+async function refreshAuthState() {
+    if (!supabaseClient) return;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const navLabel = document.getElementById('nav-login-label');
+
+    if (!session) {
+        if (navLabel) navLabel.textContent = 'Área Restrita';
+        toggleAuthView('login');
+        return;
+    }
+
+    // Busca os dados e permissões do perfil logado na tabela profiles
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('nome, tipo_perfil, is_adm, is_master, clinica_id')
+        .eq('id', session.user.id)
+        .single();
+
+    const isMaster = profile?.is_master === true;
+    const isAdm = profile?.is_adm === true || profile?.tipo_perfil === 'super_adm';
+
+    let badgeTexto = 'Cliente';
+    if (profile?.tipo_perfil === 'super_adm') badgeTexto = 'Super ADM / Master';
+    else if (isAdm) badgeTexto = isMaster ? 'ADM Master' : 'Terapeuta ADM';
+    else if (profile?.tipo_perfil === 'terapeuta') badgeTexto = 'Terapeuta';
+
+    if (navLabel) navLabel.textContent = isAdm ? 'Painel ADM' : 'Minha Conta';
+    document.getElementById('logged-user-email').textContent = profile?.nome
+        ? `${profile.nome} (${session.user.email})`
+        : session.user.email;
+    document.getElementById('logged-user-role').textContent = badgeTexto;
+
+    const masterPanel = document.getElementById('master-reset-panel');
+    if (masterPanel) masterPanel.classList.toggle('hidden', !isMaster);
+
+    toggleAuthView('account');
+}
+
+async function handleSupabaseLogin(event) {
+    event.preventDefault();
+    if (!supabaseClient) return;
+
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-submit-btn');
+    const feedback = document.getElementById('login-feedback');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Verificando...</span>';
+    feedback.classList.add('hidden');
+
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Entrar</span>';
+
+    if (error) {
+        feedback.textContent = 'Login ou senha inválidos. Verifique os dados e tente novamente.';
+        feedback.className = 'p-3.5 rounded-2xl bg-blush/80 border border-petal text-oliveDark text-xs font-medium';
+        feedback.classList.remove('hidden');
+        return;
+    }
+
+    document.getElementById('login-form').reset();
+    await refreshAuthState();
+}
+
+async function handleMasterPasswordReset(event) {
+    event.preventDefault();
+    if (!supabaseClient) return;
+
+    const targetEmail = document.getElementById('target-user-email').value.trim();
+    const newPassword = document.getElementById('target-new-password').value;
+    const btn = document.getElementById('master-reset-btn');
+    const feedback = document.getElementById('master-feedback');
+
+    btn.disabled = true;
+    btn.textContent = 'Atualizando...';
+    feedback.classList.add('hidden');
+
+    // Chama a Edge Function protegida que valida se quem chamou é 'master'
+    const { data, error } = await supabaseClient.functions.invoke('master-reset-password', {
+        body: { targetEmail, newPassword }
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Salvar Nova Senha';
+
+    if (error || data?.error) {
+        feedback.textContent = data?.error || 'Não foi possível redefinir a senha. Verifique o e-mail informado.';
+        feedback.className = 'p-3 rounded-xl bg-blush/80 border border-petal text-oliveDark text-xs font-medium';
+    } else {
+        feedback.textContent = 'Senha atualizada com sucesso!';
+        feedback.className = 'p-3 rounded-xl bg-olive/15 border border-olive/30 text-oliveDark text-xs font-medium';
+        document.getElementById('master-reset-form').reset();
+    }
+    feedback.classList.remove('hidden');
+}
+
+async function handleSupabaseLogout() {
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
+    await refreshAuthState();
+}
+
+document.addEventListener('DOMContentLoaded', refreshAuthState);
+
 // --- 4. INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
     const yearEl = document.getElementById('current-year');
