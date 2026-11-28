@@ -351,7 +351,7 @@ function exitSystemToPublicSite() {
 }
 
 function switchSystemTab(tabName) {
-    ['dashboard', 'posts', 'placeholder'].forEach((view) => {
+    ['dashboard', 'posts', 'cadastros', 'placeholder'].forEach((view) => {
         document.getElementById(`sys-view-${view}`)?.classList.add('hidden');
     });
 
@@ -360,9 +360,12 @@ function switchSystemTab(tabName) {
     } else if (tabName === 'posts') {
         document.getElementById('sys-view-posts')?.classList.remove('hidden');
         loadAdminPosts();
+    } else if (tabName === 'cadastros') {
+        document.getElementById('sys-view-cadastros')?.classList.remove('hidden');
+        switchCadastroSubTab('clientes');
+        loadCadastrosData();
     } else {
         const titles = {
-            cadastros: 'Cadastros (Clientes, Terapeutas e Planos)',
             agenda: 'Agenda de Horários (Pilates, Homecare e Clínico)',
             evolucao: 'Atendimento & Evolução Clínica',
             financeiro: 'Controle Financeiro',
