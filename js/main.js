@@ -1130,10 +1130,9 @@ async function loadAgendaData() {
                 <div class="flex items-center gap-2 self-start sm:self-center">
                     <select onchange="updateAppointmentStatus('${item.id}', '${item.client_id}', this.value)" class="px-2.5 py-1.5 rounded-xl bg-paper border border-borderWarm text-xs font-semibold text-oliveDark">
                         <option value="agendado" ${item.status === 'agendado' ? 'selected' : ''}>Agendado</option>
-                        <option value="confirmado" ${item.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-                        <option value="concluido" ${item.status === 'concluido' ? 'selected' : ''}>Concluído</option>
-                        <option value="falta" ${item.status === 'falta' ? 'selected' : ''}>Falta</option>
-                        <option value="cancelado" ${item.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                        <option value="realizado" ${item.status === 'realizado' ? 'selected' : ''}>Realizado</option>
+                        <option value="falta_sem_aviso" ${item.status === 'falta_sem_aviso' ? 'selected' : ''}>Falta sem aviso</option>
+                        <option value="remarcado" ${item.status === 'remarcado' ? 'selected' : ''}>Remarcado</option>
                     </select>
                     <button type="button" onclick="deleteAppointment('${item.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal">
                         Excluir
@@ -1144,6 +1143,142 @@ async function loadAgendaData() {
     }).join('');
 }
 
+async function adjustClientSessionBalance(clientId, oldStatus, newStatus) {
+    if (!clientId || oldStatus === newStatus) return;
+
+    const { data: client, error } = await supabaseClient
+        .from('clients')
+        .select('id, sessoes_restantes, creditos_reposicao')
+        .eq('id', clientId)
+        .single();
+
+    if (error || !client) {
+        console.error('Erro ao buscar saldo do cliente:', error);
+        return;
+    }
+
+    let sessoes = Number(client.sessoes_restantes ?? 0);
+    let reposicoes = Number(client.creditos_reposicao ?? 0);
+
+    // 1. Se estava em status que já consumiu saldo, devolve 1 sessão antes de aplicar o novo
+    if (oldStatus === 'realizado' || oldStatus === 'falta_sem_aviso') {
+        sessoes += 1;
+    }
+
+    // 2. Se o novo status consome saldo, aplica a baixa
+    if (newStatus === 'realizado') {
+        if (sessoes > 0) {
+            sessoes -= 1;
+        } else if (reposicoes > 0) {
+            reposicoes -= 1;
+        } else {
+            sessoes = 0;
+        }
+    } else if (newStatus === 'falta_sem_aviso') {
+        if (reposicoes > 0) {
+            reposicoes -= 1;
+        } else if (sessoes > 0) {
+            sessoes -= 1;
+        } else {
+            sessoes = 0;
+        }
+    }
+
+    const { error: errUpdate } = await supabaseClient
+        .from('clients')
+        .update({
+            sessoes_restantes: sessoes,
+            creditos_reposicao: reposicoes
+        })
+        .eq('id', clientId);
+
+    if (errUpdate) {
+        console.error('Erro ao atualizar sessões do cliente:', errUpdate);
+        alert('Erro ao atualizar saldo de sessões: ' + errUpdate.message);
+    }
+}
+
+async function handleSaveAppointment(event) {
+    event.preventDefault();
+    if (!supabaseClient || !currentUserProfile?.clinica_id) return;
+
+    const feedback = document.getElementById('ag-feedback');
+    const inicioRaw = document.getElementById('ag-inicio').value;
+    const inicioIso = new Date(inicioRaw).toISOString();
+    const clientId = document.getElementById('ag-cliente-id').value;
+    const status = document.getElementById('ag-status').value;
+
+    const { error } = await supabaseClient.from('appointments').insert({
+        clinica_id: currentUserProfile.clinica_id,
+        client_id: clientId,
+        therapist_id: document.getElementById('ag-terapeuta-id').value || null,
+        modalidade: document.getElementById('ag-modalidade').value,
+        data_hora: inicioIso,
+        duracao_minutos: 60,
+        status,
+        observacoes: document.getElementById('ag-obs').value.trim() || null
+    });
+
+    if (error) {
+        if (feedback) {
+            feedback.textContent = 'Erro ao agendar: ' + error.message;
+            feedback.className = 'p-3 rounded-xl bg-blush/80 border border-petal text-oliveDark text-xs font-medium';
+            feedback.classList.remove('hidden');
+        }
+        return;
+    }
+
+    if (status === 'realizado' || status === 'falta_sem_aviso') {
+        await adjustClientSessionBalance(clientId, 'agendado', status);
+    }
+
+    document.getElementById('form-cad-agenda').reset();
+    if (feedback) {
+        feedback.textContent = 'Horário agendado com sucesso!';
+        feedback.className = 'p-3 rounded-xl bg-olive/15 border border-olive/30 text-oliveDark text-xs font-medium';
+        feedback.classList.remove('hidden');
+    }
+    loadAgendaData();
+}
+
+async function updateAppointmentStatus(id, clientId, newStatus) {
+    if (!supabaseClient) return;
+    const prevStatus = agendaStatusCache[id]?.status || 'agendado';
+
+    const { data: updated, error } = await supabaseClient
+        .from('appointments')
+        .update({ status: newStatus })
+        .eq('id', id)
+        .select('id, status');
+
+    if (error) {
+        console.error('Erro ao atualizar status do agendamento:', error);
+        alert('Erro ao alterar status: ' + error.message);
+        await loadAgendaData();
+        return;
+    }
+
+    if (!updated || updated.length === 0) {
+        console.warn('Nenhuma linha atualizada em appointments (verifique RLS de UPDATE).');
+        alert('Não foi possível salvar a alteração de status no banco.');
+        await loadAgendaData();
+        return;
+    }
+
+    agendaStatusCache[id] = {
+        status: newStatus,
+        clientId
+    };
+
+    await adjustClientSessionBalance(clientId, prevStatus, newStatus);
+    await loadAgendaData();
+}
+
+async function deleteAppointment(id) {
+    if (!supabaseClient) return;
+    await supabaseClient.from('appointments').delete().eq('id', id);
+    loadAgendaData();
+}
 
 
 
