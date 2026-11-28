@@ -465,6 +465,43 @@ function showCadastroFeedback(elId, msg, isError = false) {
         : 'p-3 rounded-xl bg-olive/15 border border-olive/30 text-oliveDark text-xs font-medium';
     el.classList.remove('hidden');
 }
+async function applyPlanToExistingClient(clientId, selectId) {
+    if (!supabaseClient || !clientId) return;
+    const sel = document.getElementById(selectId);
+    const planId = sel?.value;
+    if (!planId) {
+        alert('Selecione um plano para vincular ou renovar.');
+        return;
+    }
+
+    const [{ data: plan, error: errPlan }, { data: client, error: errCli }] = await Promise.all([
+        supabaseClient.from('plans').select('id, nome, qtd_sessoes, valor').eq('id', planId).single(),
+        supabaseClient.from('clients').select('id, nome, sessoes_restantes').eq('id', clientId).single()
+    ]);
+
+    if (errPlan || !plan || errCli || !client) {
+        alert('Não foi possível carregar os dados do plano ou do cliente.');
+        return;
+    }
+
+    const novasSessoes = Number(client.sessoes_restantes ?? 0) + Number(plan.qtd_sessoes ?? 0);
+
+    const { error: errUpdate } = await supabaseClient
+        .from('clients')
+        .update({
+            plano_id: plan.id,
+            sessoes_restantes: novasSessoes
+        })
+        .eq('id', clientId);
+
+    if (errUpdate) {
+        alert('Erro ao atualizar plano do cliente: ' + errUpdate.message);
+        return;
+    }
+
+    alert(`Plano "${plan.nome}" aplicado a ${client.nome}! Saldo atual: ${novasSessoes} sessões.`);
+    await loadCadastrosData();
+}
 
 async function loadCadastrosData() {
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
@@ -561,6 +598,8 @@ async function loadCadastrosData() {
                             Plano: ${c.plans?.nome || 'Avulso'} • Terapeuta: ${c.therapists?.nome || 'Não definido'} • Sessões: ${c.sessoes_restantes}
                         </p>
                     </div>
+                    const planOptionsHtml = '<option value="">Trocar / Renovar plano...</option>' +
+    (planos || []).map((p) => `<option value="${p.id}">${p.nome} (+${p.qtd_sessoes} sessões)</option>`).join('');
                     <button type="button" onclick="deleteCadastroItem('clients', '${c.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal self-start sm:self-center">
                         Excluir
                     </button>
