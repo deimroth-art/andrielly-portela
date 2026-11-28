@@ -265,18 +265,15 @@ function openSystemPanel() {
         systemSection.classList.remove('hidden');
     }
 
+    if (typeof renderDashboardForRole === 'function') {
+        renderDashboardForRole();
+    }
+
     if (typeof switchSystemTab === 'function') {
         switchSystemTab('dashboard');
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Entrada principal no dashboard interno após login ou clique em "Abrir Painel do Sistema"
-function enterSystemDashboard(loadedProfile = null) {
-    if (loadedProfile) currentUserProfile = loadedProfile;
-    closeLoginModal();
-    openSystemPanel();
 }
 
 // Encerra a sessão no Supabase e recarrega a página para voltar limpo à área pública
