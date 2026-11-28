@@ -1144,6 +1144,9 @@ async function loadAgendaData() {
     }).join('');
 }
 
+
+
+
 async function adjustClientSessionBalance(clientId, oldStatus, newStatus) {
     if (!clientId || oldStatus === newStatus) return;
 
@@ -1153,17 +1156,18 @@ async function adjustClientSessionBalance(clientId, oldStatus, newStatus) {
         .eq('id', clientId)
         .single();
 
-    if (error || !client) return;
+    if (error || !client) {
+        console.error('Erro ao buscar saldo do cliente:', error);
+        return;
+    }
 
     let sessoes = Number(client.sessoes_restantes ?? 0);
     let reposicoes = Number(client.creditos_reposicao ?? 0);
 
-    // 1. Se estava em status que já consumiu saldo, devolve antes de aplicar o novo
     if (oldStatus === 'concluido' || oldStatus === 'falta') {
         sessoes += 1;
     }
 
-    // 2. Se o novo status consome saldo, aplica a baixa
     if (newStatus === 'concluido') {
         if (sessoes > 0) {
             sessoes -= 1;
@@ -1182,14 +1186,53 @@ async function adjustClientSessionBalance(clientId, oldStatus, newStatus) {
         }
     }
 
-    await supabaseClient
+    const { error: errUpdate } = await supabaseClient
         .from('clients')
         .update({
             sessoes_restantes: sessoes,
             creditos_reposicao: reposicoes
         })
         .eq('id', clientId);
+
+    if (errUpdate) {
+        console.error('Erro ao atualizar sessões do cliente:', errUpdate);
+        alert('Erro ao atualizar saldo de sessões: ' + errUpdate.message);
+    }
 }
+
+async function updateAppointmentStatus(id, clientId, newStatus) {
+    if (!supabaseClient) return;
+    const prevStatus = agendaStatusCache[id]?.status || 'agendado';
+
+    const { data: updated, error } = await supabaseClient
+        .from('appointments')
+        .update({ status: newStatus })
+        .eq('id', id)
+        .select('id, status');
+
+    if (error) {
+        console.error('Erro ao atualizar status do agendamento:', error);
+        alert('Erro ao alterar status: ' + error.message);
+        await loadAgendaData();
+        return;
+    }
+
+    if (!updated || updated.length === 0) {
+        console.warn('Nenhuma linha atualizada em appointments (verifique RLS de UPDATE).');
+        alert('Não foi possível salvar a alteração de status no banco.');
+        await loadAgendaData();
+        return;
+    }
+
+    agendaStatusCache[id] = {
+        status: newStatus,
+        clientId
+    };
+
+    await adjustClientSessionBalance(clientId, prevStatus, newStatus);
+    await loadAgendaData();
+}
+
 
 async function handleSaveAppointment(event) {
     event.preventDefault();
@@ -1231,27 +1274,5 @@ async function handleSaveAppointment(event) {
         feedback.className = 'p-3 rounded-xl bg-olive/15 border border-olive/30 text-oliveDark text-xs font-medium';
         feedback.classList.remove('hidden');
     }
-    loadAgendaData();
-}
-
-async function updateAppointmentStatus(id, clientId, newStatus) {
-    if (!supabaseClient) return;
-    const prevStatus = agendaStatusCache[id]?.status || 'agendado';
-
-    const { error } = await supabaseClient
-        .from('appointments')
-        .update({ status: newStatus })
-        .eq('id', id);
-
-    if (!error) {
-        await adjustClientSessionBalance(clientId, prevStatus, newStatus);
-    }
-
-    loadAgendaData();
-}
-
-async function deleteAppointment(id) {
-    if (!supabaseClient) return;
-    await supabaseClient.from('appointments').delete().eq('id', id);
     loadAgendaData();
 }
