@@ -515,6 +515,56 @@ async function handleCreatePost(event) {
     }
     feedback.classList.remove('hidden');
 }
+async function loadAdminPosts() {
+    const listEl = document.getElementById('admin-posts-list');
+    if (!listEl || !supabaseClient) return;
+
+    let query = supabaseClient
+        .from('posts')
+        .select('id, clinica_id, rede_social, titulo, url_post, created_at, expires_at')
+        .order('created_at', { ascending: false });
+
+    if (currentUserProfile?.clinica_id && currentUserProfile?.tipo_perfil !== 'super_adm') {
+        query = query.eq('clinica_id', currentUserProfile.clinica_id);
+    }
+
+    const { data: posts, error } = await query;
+
+    if (error) {
+        console.error('Erro ao carregar posts no admin:', error);
+        listEl.innerHTML = `<p class="text-xs text-oliveDark">Erro ao carregar posts: ${error.message}</p>`;
+        return;
+    }
+
+    const activePosts = (posts || []).filter(
+        (p) => !p.expires_at || new Date(p.expires_at).getTime() > Date.now()
+    );
+
+    if (activePosts.length === 0) {
+        listEl.innerHTML = '<p class="text-xs text-inkMuted">Nenhum post ativo no momento.</p>';
+        return;
+    }
+
+    listEl.innerHTML = activePosts.map((p) => {
+        const diasRestantes = p.expires_at
+            ? Math.max(1, Math.ceil((new Date(p.expires_at) - new Date()) / (1000 * 60 * 60 * 24)))
+            : 90;
+
+        return `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
+                <div class="space-y-0.5">
+                    <span class="text-[11px] font-bold uppercase text-olive">${p.rede_social} • Expira em ${diasRestantes} dias</span>
+                    <p class="font-bold text-oliveDark">${p.titulo || p.url_post}</p>
+                    <a href="${p.url_post}" target="_blank" rel="noopener noreferrer" class="text-xs text-olive underline break-all">${p.url_post}</a>
+                </div>
+                <button type="button" onclick="deletePost('${p.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal transition self-start sm:self-center">
+                    <i class="fa-solid fa-trash mr-1"></i> Excluir
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
 async function deletePost(postId) {
     if (!supabaseClient) return;
     await supabaseClient.from('posts').delete().eq('id', postId);
@@ -553,7 +603,6 @@ function buildSocialEmbedUrl(rede, rawUrl) {
     }
     return null;
 }
-
 async function loadPublicPosts() {
     const container = document.getElementById('blog-posts-container');
     if (!container || !supabaseClient) return;
@@ -630,56 +679,6 @@ async function loadPublicPosts() {
                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 </a>
             </article>
-        `;
-    }).join('');
-}
-
-async function loadAdminPosts() {
-    const listEl = document.getElementById('admin-posts-list');
-    if (!listEl || !supabaseClient) return;
-
-    let query = supabaseClient
-        .from('posts')
-        .select('id, clinica_id, rede_social, titulo, url_post, created_at, expires_at')
-        .order('created_at', { ascending: false });
-
-    if (currentUserProfile?.clinica_id && currentUserProfile?.tipo_perfil !== 'super_adm') {
-        query = query.eq('clinica_id', currentUserProfile.clinica_id);
-    }
-
-    const { data: posts, error } = await query;
-
-    if (error) {
-        console.error('Erro ao carregar posts no admin:', error);
-        listEl.innerHTML = `<p class="text-xs text-oliveDark">Erro ao carregar posts: ${error.message}</p>`;
-        return;
-    }
-
-    const activePosts = (posts || []).filter(
-        (p) => !p.expires_at || new Date(p.expires_at).getTime() > Date.now()
-    );
-
-    if (activePosts.length === 0) {
-        listEl.innerHTML = '<p class="text-xs text-inkMuted">Nenhum post ativo no momento.</p>';
-        return;
-    }
-
-    listEl.innerHTML = activePosts.map((p) => {
-        const diasRestantes = p.expires_at
-            ? Math.max(1, Math.ceil((new Date(p.expires_at) - new Date()) / (1000 * 60 * 60 * 24)))
-            : 90;
-
-        return `
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
-                <div class="space-y-0.5">
-                    <span class="text-[11px] font-bold uppercase text-olive">${p.rede_social} • Expira em ${diasRestantes} dias</span>
-                    <p class="font-bold text-oliveDark">${p.titulo || p.url_post}</p>
-                    <a href="${p.url_post}" target="_blank" rel="noopener noreferrer" class="text-xs text-olive underline break-all">${p.url_post}</a>
-                </div>
-                <button type="button" onclick="deletePost('${p.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal transition self-start sm:self-center">
-                    <i class="fa-solid fa-trash mr-1"></i> Excluir
-                </button>
-            </div>
         `;
     }).join('');
 }
