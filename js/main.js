@@ -241,6 +241,11 @@ function setPublicChromeVisible(isVisible) {
     document.querySelectorAll('.public-site-chrome').forEach((el) => {
         el.classList.toggle('hidden', !isVisible);
     });
+
+    const watermark = document.getElementById('fixed-bg-watermark');
+    if (watermark) {
+        watermark.classList.toggle('hidden', !isVisible);
+    }
 }
 
 function openSystemPanel() {
@@ -262,29 +267,33 @@ function openSystemPanel() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function enterSystemDashboard(loadedProfile = null) {
+    if (loadedProfile) currentUserProfile = loadedProfile;
+    closeLoginModal();
+    openSystemPanel();
+}
+
+
+
+
 async function handleSystemLogout() {
-    if (supabaseClient?.auth) {
-        await supabaseClient.auth.signOut();
+    try {
+        if (supabaseClient?.auth) {
+            await supabaseClient.auth.signOut();
+        }
+    } catch (err) {
+        console.warn('Erro ao encerrar sessão:', err);
     }
 
     currentUserProfile = null;
-    closeLoginModal();
-
-    const navLabel = document.getElementById('nav-login-label');
-    if (navLabel) navLabel.textContent = 'Área Restrita';
-    toggleAuthView('login');
-
-    const systemSection = document.getElementById('app-system-section');
-    if (systemSection) {
-        systemSection.classList.add('hidden');
-    }
-
     setPublicChromeVisible(true);
-
-    if (typeof switchPage === 'function') {
-        switchPage('curriculo');
-    }
+    window.location.reload();
 }
+
+
+
+
+
 
 
 async function handleSupabaseLogin(event) {
@@ -377,7 +386,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof loadPublicPosts === 'function') {
         loadPublicPosts();
     }
-});
 });
 // --- 5. DASHBOARD INTERNO, PERMISSÕES E POSTS (90 DIAS) ---
 let currentUserProfile = null;
