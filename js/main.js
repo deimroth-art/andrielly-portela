@@ -1,8 +1,8 @@
 /* ==========================================================================
-   SCRIPTS DE NAVEGAÇÃO, RENDERIZAÇÃO DE POSTS E FORMULÁRIO DE CONTATO
+   1. NAVEGAÇÃO ENTRE PÁGINAS DO SITE PÚBLICO
    ========================================================================== */
 
-// --- 1. NAVEGAÇÃO ENTRE PÁGINAS ---
+// Alterna entre as seções públicas (currículo, blog/posts e contato) e atualiza o botão ativo
 function switchPage(pageId) {
     const sections = document.querySelectorAll('.page-section');
     sections.forEach(sec => sec.classList.add('hidden'));
@@ -11,10 +11,13 @@ function switchPage(pageId) {
     if (target) {
         target.classList.remove('hidden');
     }
-   if (pageId === 'blog' && typeof loadPublicPosts === 'function') {
+
+    // Carrega os posts públicos ao abrir a aba de conteúdos
+    if (pageId === 'blog' && typeof loadPublicPosts === 'function') {
         loadPublicPosts();
     }
 
+    // Reseta o estilo de todos os botões de navegação antes de destacar o selecionado
     const navButtons = document.querySelectorAll('.nav-btn');
     navButtons.forEach(btn => {
         btn.classList.remove('bg-oliveSageBtn', 'text-white', 'shadow-sm', 'border-oliveSageBtn');
@@ -31,8 +34,11 @@ function switchPage(pageId) {
 }
 
 
+/* ==========================================================================
+   2. FORMULÁRIO DE CONTATO E MÁSCARA DE TELEFONE
+   ========================================================================== */
 
-// --- 3. ENVIO DO FORMULÁRIO DE CONTATO POR E-MAIL ---
+// Formata números de telefone brasileiros (fixo ou celular com DDD) enquanto o usuário digita
 function formatBrazilPhone(value) {
     const digits = (value || '').replace(/\D/g, '').slice(0, 11);
     if (!digits) return '';
@@ -42,6 +48,7 @@ function formatBrazilPhone(value) {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
+// Configura máscara do telefone e contador de caracteres da mensagem no formulário de contato
 document.addEventListener('DOMContentLoaded', () => {
     const phoneInput = document.getElementById('contact-phone');
     const messageInput = document.getElementById('contact-message');
@@ -62,10 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
-
-
-
+// Valida e envia os dados do formulário de contato via FormSubmit AJAX
 async function submitContactForm(event) {
     event.preventDefault();
     const btn = document.getElementById('contact-submit-btn');
@@ -131,15 +135,18 @@ async function submitContactForm(event) {
 }
 
 
+/* ==========================================================================
+   3. AUTENTICAÇÃO, SESSÃO E TRANSIÇÃO PÚBLICO / SISTEMA (SUPABASE)
+   ========================================================================== */
 
-
-// --- 4. AUTENTICAÇÃO E GESTÃO DE USUÁRIOS (SUPABASE) ---
+// Cliente Supabase inicializado com URL e chave pública do projeto
 const SUPABASE_URL = 'https://idwtcmdpnolkcnwfrmqp.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_WiIwRGkoNfXJfKOHfSTfwg_kPwbkJLW';
 const supabaseClient = window.supabase
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
+// Abre o modal de login/conta e atualiza o estado da sessão atual
 function openLoginModal() {
     const modal = document.getElementById('login-modal');
     if (!modal) return;
@@ -148,6 +155,7 @@ function openLoginModal() {
     refreshAuthState();
 }
 
+// Fecha o modal de autenticação
 function closeLoginModal() {
     const modal = document.getElementById('login-modal');
     if (!modal) return;
@@ -155,12 +163,14 @@ function closeLoginModal() {
     modal.classList.remove('flex');
 }
 
+// Fecha o modal apenas quando o clique ocorre fora da caixa interna
 function handleModalBackdropClick(event) {
     if (event.target.id === 'login-modal') {
         closeLoginModal();
     }
 }
 
+// Alterna entre as telas internas do modal ('login', 'recovery' e 'account')
 function toggleAuthView(view) {
     ['login', 'recovery', 'account'].forEach((name) => {
         const el = document.getElementById(`auth-view-${name}`);
@@ -168,12 +178,7 @@ function toggleAuthView(view) {
     });
 }
 
-
-
-
-
-
-
+// Consulta a sessão ativa, carrega o perfil em `profiles` e ajusta textos/permissões do modal
 async function refreshAuthState() {
     if (!supabaseClient) return;
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -186,7 +191,6 @@ async function refreshAuthState() {
         return;
     }
 
-    // Busca os dados e permissões do perfil logado na tabela profiles
     const { data: profile, error: profileError } = await supabaseClient
         .from('profiles')
         .select('nome, tipo_perfil, is_adm, is_master, clinica_id')
@@ -197,6 +201,7 @@ async function refreshAuthState() {
 
     currentUserProfile = profile || null;
 
+    // Garante vínculo com a clínica padrão caso `clinica_id` venha vazio no perfil
     if (currentUserProfile && !currentUserProfile.clinica_id) {
         const { data: fallbackClinica } = await supabaseClient
             .from('clinicas')
@@ -229,14 +234,13 @@ async function refreshAuthState() {
     toggleAuthView('account');
 }
 
-
-
-
+// Abre o painel interno se houver perfil autenticado
 function handleAccessPanelClick() {
     if (!currentUserProfile) return;
     openSystemPanel();
 }
 
+// Mostra ou esconde elementos visuais exclusivos da vitrine pública (cabeçalho e marca d'água)
 function setPublicChromeVisible(isVisible) {
     document.querySelectorAll('.public-site-chrome').forEach((el) => {
         el.classList.toggle('hidden', !isVisible);
@@ -248,6 +252,7 @@ function setPublicChromeVisible(isVisible) {
     }
 }
 
+// Esconde as páginas públicas, exibe a área interna do sistema e abre o dashboard
 function openSystemPanel() {
     setPublicChromeVisible(false);
 
@@ -267,15 +272,14 @@ function openSystemPanel() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Entrada principal no dashboard interno após login ou clique em "Abrir Painel do Sistema"
 function enterSystemDashboard(loadedProfile = null) {
     if (loadedProfile) currentUserProfile = loadedProfile;
     closeLoginModal();
     openSystemPanel();
 }
 
-
-
-
+// Encerra a sessão no Supabase e recarrega a página para voltar limpo à área pública
 async function handleSystemLogout() {
     try {
         if (supabaseClient?.auth) {
@@ -290,12 +294,7 @@ async function handleSystemLogout() {
     window.location.reload();
 }
 
-
-
-
-
-
-
+// Autentica o usuário com e-mail e senha no Supabase Auth
 async function handleSupabaseLogin(event) {
     event.preventDefault();
     if (!supabaseClient) return;
@@ -325,14 +324,7 @@ async function handleSupabaseLogin(event) {
     await refreshAuthState();
 }
 
-
-
-
-
-
-
-
-
+// Invoca a Edge Function `master-reset-password` para redefinir senha de outro usuário (apenas Master)
 async function handleMasterPasswordReset(event) {
     event.preventDefault();
     if (!supabaseClient) return;
@@ -346,7 +338,6 @@ async function handleMasterPasswordReset(event) {
     btn.textContent = 'Atualizando...';
     feedback.classList.add('hidden');
 
-    // Chama a Edge Function protegida que valida se quem chamou é 'master'
     const { data, error } = await supabaseClient.functions.invoke('master-reset-password', {
         body: { targetEmail, newPassword }
     });
@@ -365,12 +356,7 @@ async function handleMasterPasswordReset(event) {
     feedback.classList.remove('hidden');
 }
 
-
-
-
-
-
-
+// Faz logout simples a partir do modal de conta
 async function handleSupabaseLogout() {
     if (!supabaseClient) return;
     await supabaseClient.auth.signOut();
@@ -378,7 +364,11 @@ async function handleSupabaseLogout() {
 }
 
 
-// --- 4. INICIALIZAÇÃO ---
+/* ==========================================================================
+   4. INICIALIZAÇÃO GLOBAL DA APLICAÇÃO
+   ========================================================================== */
+
+// Preenche o ano no rodapé, verifica sessão ativa e carrega os posts públicos
 document.addEventListener('DOMContentLoaded', () => {
     const yearEl = document.getElementById('current-year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
@@ -387,23 +377,16 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPublicPosts();
     }
 });
-// --- 5. DASHBOARD INTERNO, PERMISSÕES E POSTS (90 DIAS) ---
+
+
+/* ==========================================================================
+   5. DASHBOARD INTERNO, PERMISSÕES E NAVEGAÇÃO DE SUBTELAS
+   ========================================================================== */
+
+// Armazena o perfil e a clínica do usuário autenticado
 let currentUserProfile = null;
 
-function enterSystemDashboard(loadedProfile = null) {
-    if (loadedProfile) currentUserProfile = loadedProfile;
-    closeLoginModal();
-    setPublicChromeVisible(false);
-
-    ['page-curriculo', 'page-blog', 'page-contato'].forEach((id) => {
-        document.getElementById(id)?.classList.add('hidden');
-    });
-
-    document.getElementById('app-system-section')?.classList.remove('hidden');
-    renderDashboardForRole();
-    switchSystemTab('dashboard');
-}
-
+// Sai da área interna para a página pública de currículo
 function exitSystemToPublicSite() {
     document.getElementById('app-system-section')?.classList.add('hidden');
     if (typeof switchPage === 'function') {
@@ -413,6 +396,7 @@ function exitSystemToPublicSite() {
     }
 }
 
+// Alterna entre as subtelas internas do sistema e carrega os dados da respectiva tela
 function switchSystemTab(tabName) {
     ['dashboard', 'posts', 'cadastros', 'agenda', 'placeholder'].forEach((view) => {
         document.getElementById(`sys-view-${view}`)?.classList.add('hidden');
@@ -430,7 +414,7 @@ function switchSystemTab(tabName) {
     } else if (tabName === 'agenda') {
         document.getElementById('sys-view-agenda')?.classList.remove('hidden');
         loadAgendaData();
-    }else {
+    } else {
         const titles = {
             evolucao: 'Atendimento & Evolução Clínica',
             financeiro: 'Controle Financeiro',
@@ -441,7 +425,120 @@ function switchSystemTab(tabName) {
     }
 }
 
-// --- 6. MÓDULO DE CADASTROS (CLIENTES, TERAPEUTAS E PLANOS) ---
+// Monta o cabeçalho do painel e os atalhos de módulos conforme o perfil do usuário
+async function renderDashboardForRole() {
+    if (!currentUserProfile || !supabaseClient) return;
+
+    const isSuperAdm = currentUserProfile.tipo_perfil === 'super_adm';
+    const isAdm = currentUserProfile.is_adm === true || isSuperAdm;
+    const isTerapeuta = currentUserProfile.tipo_perfil === 'terapeuta';
+    const isCliente = currentUserProfile.tipo_perfil === 'cliente';
+
+    document.getElementById('sys-welcome-title').textContent = `Olá, ${currentUserProfile.nome}`;
+    document.getElementById('sys-role-badge').textContent = isSuperAdm
+        ? 'Super ADM / Master'
+        : isAdm
+        ? 'Terapeuta ADM'
+        : isTerapeuta
+        ? 'Terapeuta'
+        : 'Portal do Cliente';
+
+    if (currentUserProfile.clinica_id) {
+        const { data: clinica } = await supabaseClient
+            .from('clinicas')
+            .select('nome, logo_url')
+            .eq('id', currentUserProfile.clinica_id)
+            .single();
+
+        if (clinica) {
+            document.getElementById('sys-clinic-name').textContent = clinica.nome;
+            if (clinica.logo_url) {
+                document.getElementById('dashboard-bg-logo').src = clinica.logo_url;
+            }
+        }
+    }
+
+    const clientCards = document.getElementById('client-dashboard-cards');
+    if (clientCards) clientCards.classList.toggle('hidden', !isCliente);
+    if (isCliente) loadClientSummary();
+
+    const modules = [];
+    if (isSuperAdm) {
+        modules.push({ id: 'clinicas', icon: 'fa-building', title: 'Clínicas SaaS', desc: 'Gerenciar clínicas assinantes e planos.' });
+    }
+    if (isAdm) {
+        modules.push({ id: 'cadastros', icon: 'fa-users-gear', title: 'Cadastros', desc: 'Clientes, terapeutas/ADM e planos.' });
+        modules.push({ id: 'posts', icon: 'fa-share-nodes', title: 'Posts & Conteúdos', desc: 'Publicar links sociais (expira em 90 dias).' });
+    }
+    if (isAdm || isTerapeuta || isCliente) {
+        modules.push({ id: 'agenda', icon: 'fa-calendar-days', title: 'Agenda de Horários', desc: 'Pilates, Homecare e Atendimento Clínico.' });
+    }
+    if (isAdm || isTerapeuta) {
+        modules.push({ id: 'evolucao', icon: 'fa-notes-medical', title: 'Atendimento / Evolução', desc: 'Avaliações, evoluções e orientações.' });
+    }
+    if (isAdm || isCliente) {
+        modules.push({ id: 'financeiro', icon: 'fa-wallet', title: 'Financeiro', desc: 'Mensalidades, vencimentos e comprovantes.' });
+    }
+
+    const grid = document.getElementById('dashboard-modules-grid');
+    if (grid) {
+        grid.innerHTML = modules.map((m) => `
+            <button type="button" onclick="switchSystemTab('${m.id}')"
+                class="cursor-pointer text-left p-5 rounded-2xl bg-paper/80 hover:bg-cardLight border border-borderWarm hover:border-olive/40 shadow-sm transition group">
+                <div class="w-10 h-10 rounded-xl bg-olive/15 text-oliveDark flex items-center justify-center mb-3 group-hover:bg-oliveSageBtn group-hover:text-white transition">
+                    <i class="fa-solid ${m.icon}"></i>
+                </div>
+                <h4 class="font-bold text-oliveDark text-sm sm:text-base">${m.title}</h4>
+                <p class="text-xs text-inkMain/80 mt-1">${m.desc}</p>
+            </button>
+        `).join('');
+    }
+}
+
+// Carrega os cartões de resumo do cliente (dados pessoais, plano/sessões e próximo pagamento)
+async function loadClientSummary() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return;
+
+    const { data: client } = await supabaseClient
+        .from('clients')
+        .select('id, nome, telefone, email, endereco, sessoes_restantes, creditos_reposicao, plans(nome, modalidade)')
+        .eq('profile_id', session.user.id)
+        .single();
+
+    if (!client) return;
+
+    document.getElementById('cli-dash-nome').textContent = client.nome;
+    document.getElementById('cli-dash-contato').textContent = `${client.telefone || ''} • ${client.email}`;
+    document.getElementById('cli-dash-endereco').textContent = client.endereco || 'Endereço não informado';
+
+    document.getElementById('cli-dash-plano').textContent = client.plans?.nome || 'Plano avulso / não vinculado';
+    document.getElementById('cli-dash-sessoes').textContent = `Sessões restantes: ${client.sessoes_restantes}`;
+    document.getElementById('cli-dash-reposicao').textContent = `Créditos de reposição: ${client.creditos_reposicao}`;
+
+    const { data: nextPay } = await supabaseClient
+        .from('payments')
+        .select('valor, data_vencimento, status')
+        .eq('client_id', client.id)
+        .in('status', ['pendente', 'atrasado'])
+        .order('data_vencimento', { ascending: true })
+        .limit(1)
+        .single();
+
+    if (nextPay) {
+        const dataFormatada = new Date(nextPay.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR');
+        document.getElementById('cli-dash-vencimento').textContent = `Vence em ${dataFormatada}`;
+        document.getElementById('cli-dash-valor').textContent = `Valor: R$ ${Number(nextPay.valor).toFixed(2).replace('.', ',')}`;
+        document.getElementById('cli-dash-status-pag').textContent = `Status: ${nextPay.status.toUpperCase()}`;
+    }
+}
+
+
+/* ==========================================================================
+   6. MÓDULO DE CADASTROS (CLIENTES, TERAPEUTAS E PLANOS)
+   ========================================================================== */
+
+// Alterna entre as sub-abas de Clientes, Terapeutas e Planos
 function switchCadastroSubTab(subTab) {
     ['clientes', 'terapeutas', 'planos'].forEach((name) => {
         document.getElementById(`cad-sub-${name}`)?.classList.toggle('hidden', name !== subTab);
@@ -456,6 +553,7 @@ function switchCadastroSubTab(subTab) {
     });
 }
 
+// Exibe mensagens de sucesso ou erro nos formulários de cadastro
 function showCadastroFeedback(elId, msg, isError = false) {
     const el = document.getElementById(elId);
     if (!el) return;
@@ -465,6 +563,8 @@ function showCadastroFeedback(elId, msg, isError = false) {
         : 'p-3 rounded-xl bg-olive/15 border border-olive/30 text-oliveDark text-xs font-medium';
     el.classList.remove('hidden');
 }
+
+// Vincula ou renova um plano em um cliente já cadastrado, somando as sessões sem duplicar o paciente
 async function applyPlanToExistingClient(clientId, selectId) {
     if (!supabaseClient || !clientId) return;
     const sel = document.getElementById(selectId);
@@ -503,6 +603,7 @@ async function applyPlanToExistingClient(clientId, selectId) {
     await loadCadastrosData();
 }
 
+// Carrega planos, terapeutas e clientes da clínica e atualiza as listas e selects
 async function loadCadastrosData() {
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
     const cid = currentUserProfile.clinica_id;
@@ -576,7 +677,8 @@ async function loadCadastrosData() {
                 </div>
             `).join('');
     }
-    // 3. Clientes
+
+    // 3. Clientes (com ação direta para trocar/renovar plano sem criar novo cadastro)
     const { data: clientes, error: errCli } = await supabaseClient
         .from('clients')
         .select('*, plans(nome), therapists(nome)')
@@ -589,25 +691,37 @@ async function loadCadastrosData() {
     if (listaClientes) {
         listaClientes.innerHTML = (!clientes || clientes.length === 0)
             ? '<p class="text-xs text-inkMuted">Nenhum cliente cadastrado.</p>'
-            : clientes.map((c) => `
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
-                    <div>
-                        <p class="font-bold text-oliveDark">${c.nome}</p>
-                        <p class="text-xs text-inkMuted">${c.email} ${c.telefone ? '• ' + c.telefone : ''}</p>
-                        <p class="text-xs text-olive font-medium mt-0.5">
-                            Plano: ${c.plans?.nome || 'Avulso'} • Terapeuta: ${c.therapists?.nome || 'Não definido'} • Sessões: ${c.sessoes_restantes}
-                        </p>
+            : clientes.map((c) => {
+                const planOptionsHtml = '<option value="">Trocar / Renovar plano...</option>' +
+                    (planos || []).map((p) => `<option value="${p.id}">${p.nome} (+${p.qtd_sessoes} sessões)</option>`).join('');
+
+                return `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
+                        <div>
+                            <p class="font-bold text-oliveDark">${c.nome}</p>
+                            <p class="text-xs text-inkMuted">${c.email} ${c.telefone ? '• ' + c.telefone : ''}</p>
+                            <p class="text-xs text-olive font-medium mt-0.5">
+                                Plano: ${c.plans?.nome || 'Avulso'} • Terapeuta: ${c.therapists?.nome || 'Não definido'} • Sessões: ${c.sessoes_restantes}
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                            <select id="cli-renew-plan-${c.id}" class="px-2.5 py-1.5 rounded-xl bg-paper border border-borderWarm text-xs font-semibold text-oliveDark">
+                                ${planOptionsHtml}
+                            </select>
+                            <button type="button" onclick="applyPlanToExistingClient('${c.id}', 'cli-renew-plan-${c.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-xs font-semibold transition">
+                                Aplicar Plano
+                            </button>
+                            <button type="button" onclick="deleteCadastroItem('clients', '${c.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal">
+                                Excluir
+                            </button>
+                        </div>
                     </div>
-                    const planOptionsHtml = '<option value="">Trocar / Renovar plano...</option>' +
-    (planos || []).map((p) => `<option value="${p.id}">${p.nome} (+${p.qtd_sessoes} sessões)</option>`).join('');
-                    <button type="button" onclick="deleteCadastroItem('clients', '${c.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal self-start sm:self-center">
-                        Excluir
-                    </button>
-                </div>
-            `).join('');
+                `;
+            }).join('');
     }
 }
 
+// Insere um novo plano/pacote na tabela `plans`
 async function handleSavePlan(event) {
     event.preventDefault();
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
@@ -631,6 +745,7 @@ async function handleSavePlan(event) {
     loadCadastrosData();
 }
 
+// Insere um novo terapeuta e sincroniza permissão ADM no perfil correspondente
 async function handleSaveTherapist(event) {
     event.preventDefault();
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
@@ -664,6 +779,7 @@ async function handleSaveTherapist(event) {
     loadCadastrosData();
 }
 
+// Insere um novo cliente na tabela `clients`
 async function handleSaveClient(event) {
     event.preventDefault();
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
@@ -693,6 +809,7 @@ async function handleSaveClient(event) {
     loadCadastrosData();
 }
 
+// Remove um item de cadastro (`plans`, `therapists` ou `clients`) pelo ID
 async function deleteCadastroItem(table, id) {
     if (!supabaseClient) return;
     await supabaseClient.from(table).delete().eq('id', id);
@@ -700,133 +817,11 @@ async function deleteCadastroItem(table, id) {
 }
 
 
+/* ==========================================================================
+   7. GESTÃO DE POSTS E CONTEÚDOS (VITRINE PÚBLICA E VALIDADE DE 90 DIAS)
+   ========================================================================== */
 
-
-
-async function renderDashboardForRole() {
-    if (!currentUserProfile || !supabaseClient) return;
-
-    const isSuperAdm = currentUserProfile.tipo_perfil === 'super_adm';
-    const isAdm = currentUserProfile.is_adm === true || isSuperAdm;
-    const isTerapeuta = currentUserProfile.tipo_perfil === 'terapeuta';
-    const isCliente = currentUserProfile.tipo_perfil === 'cliente';
-
-    document.getElementById('sys-welcome-title').textContent = `Olá, ${currentUserProfile.nome}`;
-    document.getElementById('sys-role-badge').textContent = isSuperAdm
-        ? 'Super ADM / Master'
-        : isAdm
-        ? 'Terapeuta ADM'
-        : isTerapeuta
-        ? 'Terapeuta'
-        : 'Portal do Cliente';
-
-    if (currentUserProfile.clinica_id) {
-        const { data: clinica } = await supabaseClient
-            .from('clinicas')
-            .select('nome, logo_url')
-            .eq('id', currentUserProfile.clinica_id)
-            .single();
-
-        if (clinica) {
-            document.getElementById('sys-clinic-name').textContent = clinica.nome;
-            if (clinica.logo_url) {
-                document.getElementById('dashboard-bg-logo').src = clinica.logo_url;
-            }
-        }
-    }
-
-    const clientCards = document.getElementById('client-dashboard-cards');
-    if (clientCards) clientCards.classList.toggle('hidden', !isCliente);
-    if (isCliente) loadClientSummary();
-
-    const modules = [];
-    if (isSuperAdm) {
-        modules.push({ id: 'clinicas', icon: 'fa-building', title: 'Clínicas SaaS', desc: 'Gerenciar clínicas assinantes e planos.' });
-    }
-    if (isAdm) {
-        modules.push({ id: 'cadastros', icon: 'fa-users-gear', title: 'Cadastros', desc: 'Clientes, terapeutas/ADM e planos.' });
-        modules.push({ id: 'posts', icon: 'fa-share-nodes', title: 'Posts & Conteúdos', desc: 'Publicar links sociais (expira em 90 dias).' });
-    }
-    if (isAdm || isTerapeuta || isCliente) {
-        modules.push({ id: 'agenda', icon: 'fa-calendar-days', title: 'Agenda de Horários', desc: 'Pilates, Homecare e Atendimento Clínico.' });
-    }
-    if (isAdm || isTerapeuta) {
-        modules.push({ id: 'evolucao', icon: 'fa-notes-medical', title: 'Atendimento / Evolução', desc: 'Avaliações, evoluções e orientações.' });
-    }
-    if (isAdm || isCliente) {
-        modules.push({ id: 'financeiro', icon: 'fa-wallet', title: 'Financeiro', desc: 'Mensalidades, vencimentos e comprovantes.' });
-    }
-
-    const grid = document.getElementById('dashboard-modules-grid');
-    if (grid) {
-        grid.innerHTML = modules.map((m) => `
-            <button type="button" onclick="switchSystemTab('${m.id}')"
-                class="cursor-pointer text-left p-5 rounded-2xl bg-paper/80 hover:bg-cardLight border border-borderWarm hover:border-olive/40 shadow-sm transition group">
-                <div class="w-10 h-10 rounded-xl bg-olive/15 text-oliveDark flex items-center justify-center mb-3 group-hover:bg-oliveSageBtn group-hover:text-white transition">
-                    <i class="fa-solid ${m.icon}"></i>
-                </div>
-                <h4 class="font-bold text-oliveDark text-sm sm:text-base">${m.title}</h4>
-                <p class="text-xs text-inkMain/80 mt-1">${m.desc}</p>
-            </button>
-        `).join('');
-    }
-}
-
-
-
-
-
-
-
-
-
-async function loadClientSummary() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) return;
-
-    const { data: client } = await supabaseClient
-        .from('clients')
-        .select('id, nome, telefone, email, endereco, sessoes_restantes, creditos_reposicao, plans(nome, modalidade)')
-        .eq('profile_id', session.user.id)
-        .single();
-
-    if (!client) return;
-
-    document.getElementById('cli-dash-nome').textContent = client.nome;
-    document.getElementById('cli-dash-contato').textContent = `${client.telefone || ''} • ${client.email}`;
-    document.getElementById('cli-dash-endereco').textContent = client.endereco || 'Endereço não informado';
-
-    document.getElementById('cli-dash-plano').textContent = client.plans?.nome || 'Plano avulso / não vinculado';
-    document.getElementById('cli-dash-sessoes').textContent = `Sessões restantes: ${client.sessoes_restantes}`;
-    document.getElementById('cli-dash-reposicao').textContent = `Créditos de reposição: ${client.creditos_reposicao}`;
-
-    const { data: nextPay } = await supabaseClient
-        .from('payments')
-        .select('valor, data_vencimento, status')
-        .eq('client_id', client.id)
-        .in('status', ['pendente', 'atrasado'])
-        .order('data_vencimento', { ascending: true })
-        .limit(1)
-        .single();
-
-    if (nextPay) {
-        const dataFormatada = new Date(nextPay.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR');
-        document.getElementById('cli-dash-vencimento').textContent = `Vence em ${dataFormatada}`;
-        document.getElementById('cli-dash-valor').textContent = `Valor: R$ ${Number(nextPay.valor).toFixed(2).replace('.', ',')}`;
-        document.getElementById('cli-dash-status-pag').textContent = `Status: ${nextPay.status.toUpperCase()}`;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
+// Valida e publica um novo link de rede social na tabela `posts`
 async function handleCreatePost(event) {
     event.preventDefault();
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
@@ -834,18 +829,17 @@ async function handleCreatePost(event) {
     const rede = document.getElementById('post-network').value;
     const titulo = document.getElementById('post-title').value.trim();
     const url = document.getElementById('post-url').value.trim();
-   
-   if (url.includes('lnkd.in/')) {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Publicar na Vitrine (90 dias)';
-    feedback.textContent = 'Este é um link encurtado (lnkd.in). Abra-o no navegador e copie o endereço completo (linkedin.com/posts/...) da barra superior para que a publicação apareça incorporada na página.';
-    feedback.className = 'p-3 rounded-xl bg-blush/80 border border-petal text-oliveDark text-xs font-medium';
-    feedback.classList.remove('hidden');
-    return;
-}
-    
     const btn = document.getElementById('post-submit-btn');
     const feedback = document.getElementById('post-feedback');
+
+    if (url.includes('lnkd.in/')) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Publicar na Vitrine (90 dias)';
+        feedback.textContent = 'Este é um link encurtado (lnkd.in). Abra-o no navegador e copie o endereço completo (linkedin.com/posts/...) da barra superior para que a publicação apareça incorporada na página.';
+        feedback.className = 'p-3 rounded-xl bg-blush/80 border border-petal text-oliveDark text-xs font-medium';
+        feedback.classList.remove('hidden');
+        return;
+    }
 
     btn.disabled = true;
     btn.textContent = 'Publicando...';
@@ -874,17 +868,7 @@ async function handleCreatePost(event) {
     feedback.classList.remove('hidden');
 }
 
-
-
-
-
-
-
-
-
-
-
-
+// Lista no painel administrativo os posts ativos e quantos dias restam para expirar
 async function loadAdminPosts() {
     const listEl = document.getElementById('admin-posts-list');
     if (!listEl || !supabaseClient) return;
@@ -935,16 +919,7 @@ async function loadAdminPosts() {
     }).join('');
 }
 
-
-
-
-
-
-
-
-
-
-
+// Exclui um post pelo ID e atualiza tanto a área administrativa quanto a vitrine pública
 async function deletePost(postId) {
     if (!supabaseClient) return;
     await supabaseClient.from('posts').delete().eq('id', postId);
@@ -952,6 +927,7 @@ async function deletePost(postId) {
     loadPublicPosts();
 }
 
+// Converte URLs comuns de LinkedIn, Instagram ou Facebook em URL de incorporação (`iframe`), quando possível
 function buildSocialEmbedUrl(rede, rawUrl) {
     try {
         const cleanUrl = rawUrl.split('?')[0].replace(/\/+$/, '');
@@ -984,21 +960,7 @@ function buildSocialEmbedUrl(rede, rawUrl) {
     return null;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Renderiza na página pública de conteúdos os posts ativos (ainda dentro do prazo de 90 dias)
 async function loadPublicPosts() {
     const container = document.getElementById('blog-posts-container');
     if (!container || !supabaseClient) return;
@@ -1079,9 +1041,15 @@ async function loadPublicPosts() {
     }).join('');
 }
 
-// --- 7. MÓDULO DE AGENDA DE HORÁRIOS ---
+
+/* ==========================================================================
+   8. MÓDULO DE AGENDA E CONTROLE DE SESSÕES / REPOSIÇÕES
+   ========================================================================== */
+
+// Cache em memória do status anterior de cada agendamento para evitar descontos ou estornos duplicados
 let agendaStatusCache = {};
 
+// Carrega clientes, terapeutas e horários agendados (com filtro por modalidade)
 async function loadAgendaData() {
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
     const cid = currentUserProfile.clinica_id;
@@ -1182,6 +1150,7 @@ async function loadAgendaData() {
     }).join('');
 }
 
+// Calcula estorno/desconto em `sessoes_restantes` e `creditos_reposicao` conforme transição de status
 async function adjustClientSessionBalance(clientId, oldStatus, newStatus) {
     if (!clientId || oldStatus === newStatus) return;
 
@@ -1200,12 +1169,12 @@ async function adjustClientSessionBalance(clientId, oldStatus, newStatus) {
     let sessoes = Number(client.sessoes_restantes ?? 0);
     let reposicoes = Number(client.creditos_reposicao ?? 0);
 
-    // 1. Devolve se estava em status que consumiu saldo
+    // 1. Devolve 1 sessão caso o status anterior já tenha consumido saldo
     if (oldStatus === 'realizado' || oldStatus === 'falta_sem_aviso') {
         sessoes += 1;
     }
 
-    // 2. Desconta conforme o novo status
+    // 2. Desconta 1 sessão ou crédito de reposição conforme o novo status
     if (newStatus === 'realizado') {
         if (sessoes > 0) {
             sessoes -= 1;
@@ -1244,6 +1213,7 @@ async function adjustClientSessionBalance(clientId, oldStatus, newStatus) {
     }
 }
 
+// Salva um novo agendamento na tabela `appointments` e aplica baixa inicial se já nascer realizado/falta
 async function handleSaveAppointment(event) {
     event.preventDefault();
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
@@ -1287,6 +1257,7 @@ async function handleSaveAppointment(event) {
     await loadAgendaData();
 }
 
+// Atualiza o status de um agendamento existente e sincroniza o saldo de sessões do cliente
 async function updateAppointmentStatus(id, clientId, newStatus) {
     if (!supabaseClient) return;
     const prevStatus = agendaStatusCache[id]?.status || 'agendado';
@@ -1321,6 +1292,7 @@ async function updateAppointmentStatus(id, clientId, newStatus) {
     await loadAgendaData();
 }
 
+// Exclui um agendamento da tabela `appointments` e recarrega a lista
 async function deleteAppointment(id) {
     if (!supabaseClient || !id) return;
 
