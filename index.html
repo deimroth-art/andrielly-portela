@@ -723,7 +723,82 @@
         </div>
     </div>
 </div>
-                
+                <!-- SUBTELA 4: AGENDA DE HORÁRIOS -->
+<div id="sys-view-agenda" class="hidden space-y-6">
+    <form id="form-cad-agenda" onsubmit="handleSaveAppointment(event)" class="p-6 rounded-2xl bg-paper/80 border border-borderWarm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+                <h3 class="font-serif text-xl font-bold text-oliveDark">Novo Agendamento</h3>
+                <p class="text-xs text-inkMuted">Pilates, Homecare e Atendimento Clínico</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-xs font-semibold text-oliveDark mb-1">Cliente / Paciente *</label>
+                <select id="ag-cliente-id" required class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                    <option value="">Carregando clientes...</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-oliveDark mb-1">Terapeuta</label>
+                <select id="ag-terapeuta-id" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                    <option value="">Selecionar terapeuta...</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-oliveDark mb-1">Modalidade *</label>
+                <select id="ag-modalidade" required class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                    <option value="pilates">Pilates</option>
+                    <option value="homecare">Homecare</option>
+                    <option value="clinico">Atendimento Clínico</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-oliveDark mb-1">Data e Hora de Início *</label>
+                <input type="datetime-local" id="ag-inicio" required class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-oliveDark mb-1">Status</label>
+                <select id="ag-status" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                    <option value="agendado">Agendado</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="concluido">Concluído</option>
+                    <option value="falta">Falta</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-oliveDark mb-1">Observações</label>
+                <input type="text" id="ag-obs" placeholder="Ex.: Endereço homecare, foco respiratório..." class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+            </div>
+        </div>
+
+        <div id="ag-feedback" class="hidden"></div>
+
+        <button type="submit" id="ag-submit-btn" class="cursor-pointer px-6 py-2.5 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-xs sm:text-sm font-semibold transition">
+            <i class="fa-solid fa-calendar-plus mr-1"></i> Agendar Horário
+        </button>
+    </form>
+
+    <div class="p-6 rounded-2xl bg-paper/80 border border-borderWarm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-oliveDark">Horários Agendados</h4>
+            <select id="ag-filtro-modalidade" onchange="loadAgendaData()" class="px-3.5 py-2 rounded-xl bg-cardLight/80 border border-borderWarm text-xs font-semibold text-oliveDark focus:outline-none focus:border-olive">
+                <option value="todas">Todas as modalidades</option>
+                <option value="pilates">Pilates</option>
+                <option value="homecare">Homecare</option>
+                <option value="clinico">Atendimento Clínico</option>
+            </select>
+        </div>
+        <div id="lista-agenda" class="space-y-2.5 text-xs sm:text-sm">Carregando agenda...</div>
+    </div>
+</div>
                 <!-- SUBTELA 4: PRÓXIMOS MÓDULOS -->
                 <div id="sys-view-placeholder" class="hidden p-8 rounded-2xl bg-paper/80 border border-borderWarm text-center space-y-2">
                     <h3 id="placeholder-title" class="font-serif text-2xl font-bold text-oliveDark">Módulo</h3>
