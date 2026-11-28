@@ -549,7 +549,174 @@
                     </div>
                 </div>
 
-                <!-- SUBTELA 3: PRÓXIMOS MÓDULOS -->
+<!-- SUBTELA 3: MÓDULO DE CADASTROS (CLIENTES, TERAPEUTAS E PLANOS) -->
+<div id="sys-view-cadastros" class="hidden space-y-6">
+    <!-- Navegação entre as 3 sub-abas -->
+    <div class="flex flex-wrap gap-2 border-b border-borderWarm pb-4">
+        <button type="button" id="cad-tab-btn-clientes" onclick="switchCadastroSubTab('clientes')" class="cursor-pointer px-4 py-2 rounded-xl text-xs font-bold bg-oliveSageBtn text-white transition">
+            <i class="fa-solid fa-user-group mr-1"></i> Clientes / Pacientes
+        </button>
+        <button type="button" id="cad-tab-btn-terapeutas" onclick="switchCadastroSubTab('terapeutas')" class="cursor-pointer px-4 py-2 rounded-xl text-xs font-bold bg-paper/80 text-oliveDark border border-borderWarm hover:bg-blush/70 transition">
+            <i class="fa-solid fa-user-doctor mr-1"></i> Terapeutas &amp; ADM
+        </button>
+        <button type="button" id="cad-tab-btn-planos" onclick="switchCadastroSubTab('planos')" class="cursor-pointer px-4 py-2 rounded-xl text-xs font-bold bg-paper/80 text-oliveDark border border-borderWarm hover:bg-blush/70 transition">
+            <i class="fa-solid fa-spa mr-1"></i> Planos &amp; Modalidades
+        </button>
+    </div>
+
+    <!-- SUB-ABA A: CLIENTES -->
+    <div id="cad-sub-clientes" class="space-y-6">
+        <form id="form-cad-cliente" onsubmit="handleSaveClient(event)" class="p-6 rounded-2xl bg-paper/80 border border-borderWarm space-y-4">
+            <h3 class="font-serif text-xl font-bold text-oliveDark">Cadastrar Novo Cliente / Paciente</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Nome Completo *</label>
+                    <input type="text" id="cli-nome" required placeholder="Nome do paciente ou responsável" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">E-mail (Login) *</label>
+                    <input type="email" id="cli-email" required placeholder="cliente@email.com" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Telefone / WhatsApp</label>
+                    <input type="tel" id="cli-telefone" placeholder="(41) 99999-9999" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Plano Vinculado</label>
+                    <select id="cli-plano-id" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                        <option value="">Sem plano / Avulso</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Terapeuta Responsável</label>
+                    <select id="cli-terapeuta-id" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                        <option value="">Selecionar terapeuta...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Sessões Iniciais Disponíveis</label>
+                    <input type="number" id="cli-sessoes" min="0" value="0" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Endereço (para Homecare / Cadastro)</label>
+                    <input type="text" id="cli-endereco" placeholder="Rua, número, bairro, cidade" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Observações Clínicas</label>
+                    <input type="text" id="cli-obs" placeholder="Diagnóstico, objetivos ou restrições" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+            </div>
+            <div id="cli-feedback" class="hidden"></div>
+            <button type="submit" id="cli-submit-btn" class="cursor-pointer px-6 py-2.5 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-xs sm:text-sm font-semibold transition">
+                <i class="fa-solid fa-plus mr-1"></i> Salvar Cliente
+            </button>
+        </form>
+
+        <div class="p-6 rounded-2xl bg-paper/80 border border-borderWarm">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-oliveDark mb-4">Clientes Cadastrados</h4>
+            <div id="lista-clientes" class="space-y-2.5 text-xs sm:text-sm">Carregando...</div>
+        </div>
+    </div>
+
+    <!-- SUB-ABA B: TERAPEUTAS -->
+    <div id="cad-sub-terapeutas" class="hidden space-y-6">
+        <form id="form-cad-terapeuta" onsubmit="handleSaveTherapist(event)" class="p-6 rounded-2xl bg-paper/80 border border-borderWarm space-y-4">
+            <h3 class="font-serif text-xl font-bold text-oliveDark">Cadastrar Terapeuta</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Nome Completo *</label>
+                    <input type="text" id="ter-nome" required placeholder="Nome do profissional" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">E-mail *</label>
+                    <input type="email" id="ter-email" required placeholder="terapeuta@clinica.com" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Telefone</label>
+                    <input type="tel" id="ter-telefone" placeholder="(41) 99999-9999" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">CREFITO</label>
+                    <input type="text" id="ter-crefito" placeholder="Ex.: 123456-F" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Especialidades</label>
+                    <input type="text" id="ter-especialidades" placeholder="Ex.: Pilates, Fisioterapia Neonatal, Bobath" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+            </div>
+
+            <label class="inline-flex items-center gap-2.5 cursor-pointer select-none p-3 rounded-xl bg-blush/45 border border-petal/70">
+                <input type="checkbox" id="ter-is-adm" class="w-4 h-4 accent-olive">
+                <span class="text-xs font-semibold text-oliveDark">
+                    Conceder permissão de <strong>ADM da Clínica</strong> (acesso completo a Cadastros, Posts e Financeiro)
+                </span>
+            </label>
+
+            <div id="ter-feedback" class="hidden"></div>
+            <div>
+                <button type="submit" id="ter-submit-btn" class="cursor-pointer px-6 py-2.5 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-xs sm:text-sm font-semibold transition">
+                    <i class="fa-solid fa-plus mr-1"></i> Salvar Terapeuta
+                </button>
+            </div>
+        </form>
+
+        <div class="p-6 rounded-2xl bg-paper/80 border border-borderWarm">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-oliveDark mb-4">Equipe de Terapeutas</h4>
+            <div id="lista-terapeutas" class="space-y-2.5 text-xs sm:text-sm">Carregando...</div>
+        </div>
+    </div>
+
+    <!-- SUB-ABA C: PLANOS -->
+    <div id="cad-sub-planos" class="hidden space-y-6">
+        <form id="form-cad-plano" onsubmit="handleSavePlan(event)" class="p-6 rounded-2xl bg-paper/80 border border-borderWarm space-y-4">
+            <h3 class="font-serif text-xl font-bold text-oliveDark">Cadastrar Plano / Pacote de Atendimento</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Nome do Plano *</label>
+                    <input type="text" id="pla-nome" required placeholder="Ex.: Pilates 2x na semana" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Modalidade *</label>
+                    <select id="pla-modalidade" required class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                        <option value="pilates">Pilates</option>
+                        <option value="homecare">Homecare</option>
+                        <option value="clinico">Atendimento Clínico</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Qtd. de Sessões *</label>
+                    <input type="number" id="pla-sessoes" min="1" value="8" required class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Valor (R$) *</label>
+                    <input type="number" id="pla-valor" step="0.01" min="0" required placeholder="350.00" class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-oliveDark mb-1">Periodicidade *</label>
+                    <select id="pla-periodicidade" required class="w-full px-3.5 py-2.5 rounded-xl bg-cardLight/80 border border-borderWarm text-sm focus:outline-none focus:border-olive">
+                        <option value="mensal">Mensal</option>
+                        <option value="avulso">Avulso / Sessão Única</option>
+                        <option value="trimestral">Trimestral</option>
+                        <option value="semestral">Semestral</option>
+                    </select>
+                </div>
+            </div>
+            <div id="pla-feedback" class="hidden"></div>
+            <button type="submit" id="pla-submit-btn" class="cursor-pointer px-6 py-2.5 rounded-xl bg-oliveSageBtn hover:bg-oliveDark text-white text-xs sm:text-sm font-semibold transition">
+                <i class="fa-solid fa-plus mr-1"></i> Salvar Plano
+            </button>
+        </form>
+
+        <div class="p-6 rounded-2xl bg-paper/80 border border-borderWarm">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-oliveDark mb-4">Planos Cadastrados</h4>
+            <div id="lista-planos" class="space-y-2.5 text-xs sm:text-sm">Carregando...</div>
+        </div>
+    </div>
+</div>
+                
+                <!-- SUBTELA 4: PRÓXIMOS MÓDULOS -->
                 <div id="sys-view-placeholder" class="hidden p-8 rounded-2xl bg-paper/80 border border-borderWarm text-center space-y-2">
                     <h3 id="placeholder-title" class="font-serif text-2xl font-bold text-oliveDark">Módulo</h3>
                     <p class="text-xs sm:text-sm text-inkMain/80">As tabelas já estão criadas no Supabase; construiremos esta tela na próxima etapa.</p>
