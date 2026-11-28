@@ -1041,13 +1041,11 @@ async function loadPublicPosts() {
 }
 
 
-
 // --- 7. MÓDULO DE AGENDA DE HORÁRIOS ---
 async function loadAgendaData() {
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
     const cid = currentUserProfile.clinica_id;
 
-    // Popula selects de clientes e terapeutas
     const [{ data: clientes }, { data: terapeutas }] = await Promise.all([
         supabaseClient.from('clients').select('id, nome, sessoes_restantes').eq('clinica_id', cid).order('nome'),
         supabaseClient.from('therapists').select('id, nome').eq('clinica_id', cid).order('nome')
@@ -1065,12 +1063,11 @@ async function loadAgendaData() {
             (terapeutas || []).map((t) => `<option value="${t.id}">${t.nome}</option>`).join('');
     }
 
-    // Busca agendamentos
     let query = supabaseClient
         .from('appointments')
         .select('*, clients(nome), therapists(nome)')
         .eq('clinica_id', cid)
-        .order('data_hora_inicio', { ascending: true });
+        .order('data_hora', { ascending: true });
 
     const filtroMod = document.getElementById('ag-filtro-modalidade')?.value;
     if (filtroMod && filtroMod !== 'todas') {
@@ -1092,7 +1089,7 @@ async function loadAgendaData() {
     }
 
     listaEl.innerHTML = items.map((item) => {
-        const dt = new Date(item.data_hora_inicio).toLocaleString('pt-BR', {
+        const dt = new Date(item.data_hora).toLocaleString('pt-BR', {
             dateStyle: 'short',
             timeStyle: 'short'
         });
@@ -1133,7 +1130,8 @@ async function handleSaveAppointment(event) {
         client_id: document.getElementById('ag-cliente-id').value,
         therapist_id: document.getElementById('ag-terapeuta-id').value || null,
         modalidade: document.getElementById('ag-modalidade').value,
-        data_hora_inicio: inicioIso,
+        data_hora: inicioIso,
+        duracao_minutos: 60,
         status: document.getElementById('ag-status').value,
         observacoes: document.getElementById('ag-obs').value.trim() || null
     });
