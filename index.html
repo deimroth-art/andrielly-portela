@@ -418,19 +418,16 @@
             </div>
         </section>
 
+
         <!-- ============================================================ -->
-        <!-- ÁREA INTERNA DO SISTEMA (DASHBOARD & POSTS 90 DIAS)           -->
+        <!-- ÁREA INTERNA DO SISTEMA-->
         <!-- ============================================================ -->
         <section id="app-system-section" class="hidden relative min-h-[75vh] rounded-3xl overflow-hidden border border-borderWarm/80 shadow-card-soft bg-cardLight/85 backdrop-blur-xs p-6 sm:p-10 space-y-6">
             <!-- Logo ao fundo -->
             <div class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08]">
                 <img id="dashboard-bg-logo" src="img/logo.jpeg" alt="Marca d'água" class="max-w-md w-3/4 object-contain rounded-full" onerror="handleImageError(this, 'andrielly_custom_hero_logo')">
             </div>
-<div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-6 border-b border-borderWarm">
-    <div>
-        <span class="text-xs font-bold uppercase tracking-wider text-olive">Painel da Clínica</span>
-        <h2 id="system-welcome-title" class="font-serif text-2xl font-bold text-oliveDark">Área Interna</h2>
-    </div>
+
             <div class="relative z-10 space-y-6">
                 <!-- Cabeçalho do Painel -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-borderWarm/80">
@@ -449,17 +446,18 @@
                             <i class="fa-solid fa-house mr-1"></i> Início
                         </button>
                         <button type="button"
-                        id="btn-system-logout"
-                        onclick="handleSystemLogout()"
-                        class="cursor-pointer px-4 py-2 rounded-xl bg-blush/80 hover:bg-petal text-oliveDark border border-borderWarm text-xs font-bold inline-flex items-center gap-2 transition">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        <span>Sair</span>
+                            id="btn-system-logout"
+                            onclick="handleSystemLogout()"
+                            class="cursor-pointer px-4 py-2 rounded-xl bg-blush/80 hover:bg-petal text-oliveDark border border-borderWarm text-xs font-bold inline-flex items-center gap-2 transition">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Sair</span>
                         </button>
-                        </div>
-                        
                     </div>
                 </div>
 
+
+
+                
                 <!-- SUBTELA 1: DASHBOARD INICIAL -->
                 <div id="sys-view-dashboard" class="space-y-6">
                     <!-- Dados exclusivos do CLIENTE -->
