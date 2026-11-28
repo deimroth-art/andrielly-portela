@@ -237,7 +237,19 @@ console.log('Perfil carregado:', profile, 'Erro:', profileError);
     toggleAuthView('account');
    currentUserProfile = profile;
 }
+currentUserProfile = profile || null;
 
+if (currentUserProfile && !currentUserProfile.clinica_id) {
+    const { data: fallbackClinica } = await supabaseClient
+        .from('clinicas')
+        .select('id')
+        .eq('slug', 'andrielly-portela')
+        .single();
+
+    if (fallbackClinica) {
+        currentUserProfile.clinica_id = fallbackClinica.id;
+    }
+}
 async function handleSupabaseLogin(event) {
     event.preventDefault();
     if (!supabaseClient) return;
