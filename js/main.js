@@ -27,46 +27,7 @@ function switchPage(pageId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// --- 2. RENDERIZAÇÃO DOS POSTS DO ARQUIVO js/posts.js ---
-function renderBlogPosts() {
-    const container = document.getElementById('blog-posts-container');
-    if (!container) return;
 
-    const postsList = typeof LINKEDIN_EMBEDS !== 'undefined' ? LINKEDIN_EMBEDS : [];
-
-    if (postsList.length === 0) {
-        container.className = 'w-full';
-        container.innerHTML = `
-            <div class="bg-cardLight/60 backdrop-blur-md rounded-3xl border border-borderWarm/80 p-8 text-center text-sm text-inkMuted">
-                Nenhuma publicação incorporada no momento.
-            </div>
-        `;
-        return;
-    }
-
-    if (postsList.length === 1) {
-        container.className = 'flex justify-center';
-    } else {
-        container.className = 'columns-1 lg:columns-2 gap-6 space-y-6 max-w-[1110px] mx-auto';
-    }
-
-    container.innerHTML = postsList.map((post, index) => `
-        <article class="break-inside-avoid max-w-[540px] w-full mx-auto bg-cardLight/45 backdrop-blur-[2px] rounded-3xl border border-borderWarm/80 p-2.5 sm:p-3 shadow-card-soft overflow-hidden">
-            <div class="w-full overflow-hidden rounded-2xl bg-white">
-                <iframe
-                    src="${post.embedUrl}"
-                    height="${post.height || 750}"
-                    width="100%"
-                    frameborder="0"
-                    allowfullscreen=""
-                    loading="lazy"
-                    title="Publicação incorporada do LinkedIn ${index + 1}"
-                    class="w-full max-w-[504px] block mx-auto">
-                </iframe>
-            </div>
-        </article>
-    `).join('');
-}
 
 // --- 3. ENVIO DO FORMULÁRIO DE CONTATO POR E-MAIL ---
 function formatBrazilPhone(value) {
