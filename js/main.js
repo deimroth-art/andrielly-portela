@@ -146,6 +146,9 @@ const supabaseClient = window.supabase
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
+// Declarado no topo da seção para evitar ReferenceError antes da inicialização
+let currentUserProfile = null;
+
 // Abre o modal de login/conta e atualiza o estado da sessão atual
 function openLoginModal() {
     const modal = document.getElementById('login-modal');
@@ -234,9 +237,11 @@ async function refreshAuthState() {
     toggleAuthView('account');
 }
 
-// Abre o painel interno se houver perfil autenticado
-function handleAccessPanelClick() {
-    if (!currentUserProfile) return;
+// Abre o painel interno quando o botão de acesso ao painel é clicado
+async function handleAccessPanelClick() {
+    if (!currentUserProfile && supabaseClient) {
+        await refreshAuthState();
+    }
     openSystemPanel();
 }
 
@@ -253,7 +258,8 @@ function setPublicChromeVisible(isVisible) {
 }
 
 // Esconde as páginas públicas, exibe a área interna do sistema e abre o dashboard
-function openSystemPanel() {
+async function openSystemPanel() {
+    closeLoginModal();
     setPublicChromeVisible(false);
 
     document.querySelectorAll('.page-section').forEach((sec) => {
@@ -265,8 +271,12 @@ function openSystemPanel() {
         systemSection.classList.remove('hidden');
     }
 
+    if (!currentUserProfile && supabaseClient) {
+        await refreshAuthState();
+    }
+
     if (typeof renderDashboardForRole === 'function') {
-        renderDashboardForRole();
+        await renderDashboardForRole();
     }
 
     if (typeof switchSystemTab === 'function') {
@@ -380,9 +390,6 @@ document.addEventListener('DOMContentLoaded', () => {
    5. DASHBOARD INTERNO, PERMISSÕES E NAVEGAÇÃO DE SUBTELAS
    ========================================================================== */
 
-// Armazena o perfil e a clínica do usuário autenticado
-let currentUserProfile = null;
-
 // Sai da área interna para a página pública de currículo
 function exitSystemToPublicSite() {
     document.getElementById('app-system-section')?.classList.add('hidden');
@@ -431,14 +438,21 @@ async function renderDashboardForRole() {
     const isTerapeuta = currentUserProfile.tipo_perfil === 'terapeuta';
     const isCliente = currentUserProfile.tipo_perfil === 'cliente';
 
-    document.getElementById('sys-welcome-title').textContent = `Olá, ${currentUserProfile.nome}`;
-    document.getElementById('sys-role-badge').textContent = isSuperAdm
-        ? 'Super ADM / Master'
-        : isAdm
-        ? 'Terapeuta ADM'
-        : isTerapeuta
-        ? 'Terapeuta'
-        : 'Portal do Cliente';
+    const welcomeEl = document.getElementById('sys-welcome-title');
+    if (welcomeEl && currentUserProfile.nome) {
+        welcomeEl.textContent = `Olá, ${currentUserProfile.nome}`;
+    }
+
+    const roleBadgeEl = document.getElementById('sys-role-badge');
+    if (roleBadgeEl) {
+        roleBadgeEl.textContent = isSuperAdm
+            ? 'Super ADM / Master'
+            : isAdm
+            ? 'Terapeuta ADM'
+            : isTerapeuta
+            ? 'Terapeuta'
+            : 'Portal do Cliente';
+    }
 
     if (currentUserProfile.clinica_id) {
         const { data: clinica } = await supabaseClient
@@ -448,9 +462,11 @@ async function renderDashboardForRole() {
             .single();
 
         if (clinica) {
-            document.getElementById('sys-clinic-name').textContent = clinica.nome;
-            if (clinica.logo_url) {
-                document.getElementById('dashboard-bg-logo').src = clinica.logo_url;
+            const clinicNameEl = document.getElementById('sys-clinic-name');
+            if (clinicNameEl) clinicNameEl.textContent = clinica.nome;
+            const bgLogoEl = document.getElementById('dashboard-bg-logo');
+            if (clinica.logo_url && bgLogoEl) {
+                bgLogoEl.src = clinica.logo_url;
             }
         }
     }
