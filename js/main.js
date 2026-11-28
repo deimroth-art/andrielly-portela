@@ -414,7 +414,7 @@ function exitSystemToPublicSite() {
 }
 
 function switchSystemTab(tabName) {
-    ['dashboard', 'posts', 'cadastros', 'placeholder'].forEach((view) => {
+    ['dashboard', 'posts', 'cadastros', 'agenda', 'placeholder'].forEach((view) => {
         document.getElementById(`sys-view-${view}`)?.classList.add('hidden');
     });
 
@@ -427,9 +427,11 @@ function switchSystemTab(tabName) {
         document.getElementById('sys-view-cadastros')?.classList.remove('hidden');
         switchCadastroSubTab('clientes');
         loadCadastrosData();
-    } else {
+    } else if (tabName === 'agenda') {
+        document.getElementById('sys-view-agenda')?.classList.remove('hidden');
+        loadAgendaData();
+    }else {
         const titles = {
-            agenda: 'Agenda de Horários (Pilates, Homecare e Clínico)',
             evolucao: 'Atendimento & Evolução Clínica',
             financeiro: 'Controle Financeiro',
             clinicas: 'Gestão de Clínicas Assinantes (SaaS)'
@@ -537,7 +539,6 @@ async function loadCadastrosData() {
                 </div>
             `).join('');
     }
-
     // 3. Clientes
     const { data: clientes, error: errCli } = await supabaseClient
         .from('clients')
@@ -1037,4 +1038,132 @@ async function loadPublicPosts() {
             </article>
         `;
     }).join('');
+}
+
+
+
+// --- 7. MÓDULO DE AGENDA DE HORÁRIOS ---
+async function loadAgendaData() {
+    if (!supabaseClient || !currentUserProfile?.clinica_id) return;
+    const cid = currentUserProfile.clinica_id;
+
+    // Popula selects de clientes e terapeutas
+    const [{ data: clientes }, { data: terapeutas }] = await Promise.all([
+        supabaseClient.from('clients').select('id, nome, sessoes_restantes').eq('clinica_id', cid).order('nome'),
+        supabaseClient.from('therapists').select('id, nome').eq('clinica_id', cid).order('nome')
+    ]);
+
+    const selCli = document.getElementById('ag-cliente-id');
+    if (selCli) {
+        selCli.innerHTML = '<option value="">Selecione um cliente...</option>' +
+            (clientes || []).map((c) => `<option value="${c.id}">${c.nome} (${c.sessoes_restantes} sessões)</option>`).join('');
+    }
+
+    const selTer = document.getElementById('ag-terapeuta-id');
+    if (selTer) {
+        selTer.innerHTML = '<option value="">Selecionar terapeuta...</option>' +
+            (terapeutas || []).map((t) => `<option value="${t.id}">${t.nome}</option>`).join('');
+    }
+
+    // Busca agendamentos
+    let query = supabaseClient
+        .from('appointments')
+        .select('*, clients(nome), therapists(nome)')
+        .eq('clinica_id', cid)
+        .order('data_hora_inicio', { ascending: true });
+
+    const filtroMod = document.getElementById('ag-filtro-modalidade')?.value;
+    if (filtroMod && filtroMod !== 'todas') {
+        query = query.eq('modalidade', filtroMod);
+    }
+
+    const { data: items, error } = await query;
+    const listaEl = document.getElementById('lista-agenda');
+    if (!listaEl) return;
+
+    if (error) {
+        listaEl.innerHTML = `<p class="text-xs text-oliveDark">Erro ao carregar agenda: ${error.message}</p>`;
+        return;
+    }
+
+    if (!items || items.length === 0) {
+        listaEl.innerHTML = '<p class="text-xs text-inkMuted">Nenhum horário agendado para este filtro.</p>';
+        return;
+    }
+
+    listaEl.innerHTML = items.map((item) => {
+        const dt = new Date(item.data_hora_inicio).toLocaleString('pt-BR', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+        });
+        return `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
+                <div>
+                    <span class="text-[11px] font-bold uppercase text-olive">${item.modalidade} • ${item.status}</span>
+                    <p class="font-bold text-oliveDark">${dt} — ${item.clients?.nome || 'Cliente'}</p>
+                    <p class="text-xs text-inkMuted">Terapeuta: ${item.therapists?.nome || 'A definir'}${item.observacoes ? ' • ' + item.observacoes : ''}</p>
+                </div>
+                <div class="flex items-center gap-2 self-start sm:self-center">
+                    <select onchange="updateAppointmentStatus('${item.id}', this.value)" class="px-2.5 py-1.5 rounded-xl bg-paper border border-borderWarm text-xs font-semibold text-oliveDark">
+                        <option value="agendado" ${item.status === 'agendado' ? 'selected' : ''}>Agendado</option>
+                        <option value="confirmado" ${item.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                        <option value="concluido" ${item.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                        <option value="falta" ${item.status === 'falta' ? 'selected' : ''}>Falta</option>
+                        <option value="cancelado" ${item.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                    </select>
+                    <button type="button" onclick="deleteAppointment('${item.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal">
+                        Excluir
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function handleSaveAppointment(event) {
+    event.preventDefault();
+    if (!supabaseClient || !currentUserProfile?.clinica_id) return;
+
+    const feedback = document.getElementById('ag-feedback');
+    const inicioRaw = document.getElementById('ag-inicio').value;
+    const inicioIso = new Date(inicioRaw).toISOString();
+
+    const { error } = await supabaseClient.from('appointments').insert({
+        clinica_id: currentUserProfile.clinica_id,
+        client_id: document.getElementById('ag-cliente-id').value,
+        therapist_id: document.getElementById('ag-terapeuta-id').value || null,
+        modalidade: document.getElementById('ag-modalidade').value,
+        data_hora_inicio: inicioIso,
+        status: document.getElementById('ag-status').value,
+        observacoes: document.getElementById('ag-obs').value.trim() || null
+    });
+
+    if (error) {
+        if (feedback) {
+            feedback.textContent = 'Erro ao agendar: ' + error.message;
+            feedback.className = 'p-3 rounded-xl bg-blush/80 border border-petal text-oliveDark text-xs font-medium';
+            feedback.classList.remove('hidden');
+        }
+        return;
+    }
+
+    document.getElementById('form-cad-agenda').reset();
+    if (feedback) {
+        feedback.textContent = 'Horário agendado com sucesso!';
+        feedback.className = 'p-3 rounded-xl bg-olive/15 border border-olive/30 text-oliveDark text-xs font-medium';
+        feedback.classList.remove('hidden');
+    }
+    loadAgendaData();
+}
+
+async function updateAppointmentStatus(id, status) {
+    if (!supabaseClient) return;
+    await supabaseClient.from('appointments').update({ status }).eq('id', id);
+    loadAgendaData();
+}
+
+async function deleteAppointment(id) {
+    if (!supabaseClient) return;
+    await supabaseClient.from('appointments').delete().eq('id', id);
+    loadAgendaData();
 }
