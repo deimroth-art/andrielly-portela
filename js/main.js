@@ -11,6 +11,9 @@ function switchPage(pageId) {
     if (target) {
         target.classList.remove('hidden');
     }
+   if (pageId === 'blog' && typeof loadPublicPosts === 'function') {
+        loadPublicPosts();
+    }
 
     const navButtons = document.querySelectorAll('.nav-btn');
     navButtons.forEach(btn => {
