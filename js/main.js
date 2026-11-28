@@ -1040,21 +1040,34 @@ async function loadPublicPosts() {
     }).join('');
 }
 
-
 // --- 7. MÓDULO DE AGENDA DE HORÁRIOS ---
+let agendaStatusCache = {};
+
 async function loadAgendaData() {
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
     const cid = currentUserProfile.clinica_id;
 
     const [{ data: clientes }, { data: terapeutas }] = await Promise.all([
-        supabaseClient.from('clients').select('id, nome, sessoes_restantes').eq('clinica_id', cid).order('nome'),
-        supabaseClient.from('therapists').select('id, nome').eq('clinica_id', cid).order('nome')
+        supabaseClient
+            .from('clients')
+            .select('id, nome, sessoes_restantes, creditos_reposicao')
+            .eq('clinica_id', cid)
+            .order('nome'),
+        supabaseClient
+            .from('therapists')
+            .select('id, nome')
+            .eq('clinica_id', cid)
+            .order('nome')
     ]);
 
     const selCli = document.getElementById('ag-cliente-id');
     if (selCli) {
         selCli.innerHTML = '<option value="">Selecione um cliente...</option>' +
-            (clientes || []).map((c) => `<option value="${c.id}">${c.nome} (${c.sessoes_restantes} sessões)</option>`).join('');
+            (clientes || []).map((c) => {
+                const rep = Number(c.creditos_reposicao || 0);
+                const repLabel = rep > 0 ? ` • ${rep} reposição` : '';
+                return `<option value="${c.id}">${c.nome} (${c.sessoes_restantes ?? 0} sessões${repLabel})</option>`;
+            }).join('');
     }
 
     const selTer = document.getElementById('ag-terapeuta-id');
@@ -1065,7 +1078,7 @@ async function loadAgendaData() {
 
     let query = supabaseClient
         .from('appointments')
-        .select('*, clients(nome), therapists(nome)')
+        .select('*, clients(id, nome, sessoes_restantes, creditos_reposicao), therapists(nome)')
         .eq('clinica_id', cid)
         .order('data_hora', { ascending: true });
 
@@ -1088,20 +1101,34 @@ async function loadAgendaData() {
         return;
     }
 
+    agendaStatusCache = {};
+    items.forEach((item) => {
+        agendaStatusCache[item.id] = {
+            status: item.status,
+            clientId: item.client_id
+        };
+    });
+
     listaEl.innerHTML = items.map((item) => {
         const dt = new Date(item.data_hora).toLocaleString('pt-BR', {
             dateStyle: 'short',
             timeStyle: 'short'
         });
+        const sessoes = item.clients?.sessoes_restantes ?? 0;
+        const reposicoes = item.clients?.creditos_reposicao ?? 0;
+
         return `
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
                 <div>
                     <span class="text-[11px] font-bold uppercase text-olive">${item.modalidade} • ${item.status}</span>
                     <p class="font-bold text-oliveDark">${dt} — ${item.clients?.nome || 'Cliente'}</p>
-                    <p class="text-xs text-inkMuted">Terapeuta: ${item.therapists?.nome || 'A definir'}${item.observacoes ? ' • ' + item.observacoes : ''}</p>
+                    <p class="text-xs text-inkMuted">
+                        Terapeuta: ${item.therapists?.nome || 'A definir'} • Saldo atual: ${sessoes} sessões / ${reposicoes} reposições
+                        ${item.observacoes ? ' • ' + item.observacoes : ''}
+                    </p>
                 </div>
                 <div class="flex items-center gap-2 self-start sm:self-center">
-                    <select onchange="updateAppointmentStatus('${item.id}', this.value)" class="px-2.5 py-1.5 rounded-xl bg-paper border border-borderWarm text-xs font-semibold text-oliveDark">
+                    <select onchange="updateAppointmentStatus('${item.id}', '${item.client_id}', this.value)" class="px-2.5 py-1.5 rounded-xl bg-paper border border-borderWarm text-xs font-semibold text-oliveDark">
                         <option value="agendado" ${item.status === 'agendado' ? 'selected' : ''}>Agendado</option>
                         <option value="confirmado" ${item.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
                         <option value="concluido" ${item.status === 'concluido' ? 'selected' : ''}>Concluído</option>
@@ -1117,6 +1144,53 @@ async function loadAgendaData() {
     }).join('');
 }
 
+async function adjustClientSessionBalance(clientId, oldStatus, newStatus) {
+    if (!clientId || oldStatus === newStatus) return;
+
+    const { data: client, error } = await supabaseClient
+        .from('clients')
+        .select('id, sessoes_restantes, creditos_reposicao')
+        .eq('id', clientId)
+        .single();
+
+    if (error || !client) return;
+
+    let sessoes = Number(client.sessoes_restantes ?? 0);
+    let reposicoes = Number(client.creditos_reposicao ?? 0);
+
+    // 1. Se estava em status que já consumiu saldo, devolve antes de aplicar o novo
+    if (oldStatus === 'concluido' || oldStatus === 'falta') {
+        sessoes += 1;
+    }
+
+    // 2. Se o novo status consome saldo, aplica a baixa
+    if (newStatus === 'concluido') {
+        if (sessoes > 0) {
+            sessoes -= 1;
+        } else if (reposicoes > 0) {
+            reposicoes -= 1;
+        } else {
+            sessoes = 0;
+        }
+    } else if (newStatus === 'falta') {
+        if (reposicoes > 0) {
+            reposicoes -= 1;
+        } else if (sessoes > 0) {
+            sessoes -= 1;
+        } else {
+            sessoes = 0;
+        }
+    }
+
+    await supabaseClient
+        .from('clients')
+        .update({
+            sessoes_restantes: sessoes,
+            creditos_reposicao: reposicoes
+        })
+        .eq('id', clientId);
+}
+
 async function handleSaveAppointment(event) {
     event.preventDefault();
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
@@ -1124,15 +1198,17 @@ async function handleSaveAppointment(event) {
     const feedback = document.getElementById('ag-feedback');
     const inicioRaw = document.getElementById('ag-inicio').value;
     const inicioIso = new Date(inicioRaw).toISOString();
+    const clientId = document.getElementById('ag-cliente-id').value;
+    const status = document.getElementById('ag-status').value;
 
     const { error } = await supabaseClient.from('appointments').insert({
         clinica_id: currentUserProfile.clinica_id,
-        client_id: document.getElementById('ag-cliente-id').value,
+        client_id: clientId,
         therapist_id: document.getElementById('ag-terapeuta-id').value || null,
         modalidade: document.getElementById('ag-modalidade').value,
         data_hora: inicioIso,
         duracao_minutos: 60,
-        status: document.getElementById('ag-status').value,
+        status,
         observacoes: document.getElementById('ag-obs').value.trim() || null
     });
 
@@ -1145,6 +1221,10 @@ async function handleSaveAppointment(event) {
         return;
     }
 
+    if (status === 'concluido' || status === 'falta') {
+        await adjustClientSessionBalance(clientId, 'agendado', status);
+    }
+
     document.getElementById('form-cad-agenda').reset();
     if (feedback) {
         feedback.textContent = 'Horário agendado com sucesso!';
@@ -1154,9 +1234,19 @@ async function handleSaveAppointment(event) {
     loadAgendaData();
 }
 
-async function updateAppointmentStatus(id, status) {
+async function updateAppointmentStatus(id, clientId, newStatus) {
     if (!supabaseClient) return;
-    await supabaseClient.from('appointments').update({ status }).eq('id', id);
+    const prevStatus = agendaStatusCache[id]?.status || 'agendado';
+
+    const { error } = await supabaseClient
+        .from('appointments')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+    if (!error) {
+        await adjustClientSessionBalance(clientId, prevStatus, newStatus);
+    }
+
     loadAgendaData();
 }
 
