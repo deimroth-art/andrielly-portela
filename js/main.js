@@ -376,7 +376,225 @@ function switchSystemTab(tabName) {
     }
 }
 
+// --- 6. MÓDULO DE CADASTROS (CLIENTES, TERAPEUTAS E PLANOS) ---
+function switchCadastroSubTab(subTab) {
+    ['clientes', 'terapeutas', 'planos'].forEach((name) => {
+        document.getElementById(`cad-sub-${name}`)?.classList.toggle('hidden', name !== subTab);
+        const btn = document.getElementById(`cad-tab-btn-${name}`);
+        if (btn) {
+            if (name === subTab) {
+                btn.className = 'cursor-pointer px-4 py-2 rounded-xl text-xs font-bold bg-oliveSageBtn text-white transition';
+            } else {
+                btn.className = 'cursor-pointer px-4 py-2 rounded-xl text-xs font-bold bg-paper/80 text-oliveDark border border-borderWarm hover:bg-blush/70 transition';
+            }
+        }
+    });
+}
 
+function showCadastroFeedback(elId, msg, isError = false) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = msg;
+    el.className = isError
+        ? 'p-3 rounded-xl bg-blush/80 border border-petal text-oliveDark text-xs font-medium'
+        : 'p-3 rounded-xl bg-olive/15 border border-olive/30 text-oliveDark text-xs font-medium';
+    el.classList.remove('hidden');
+}
+
+async function loadCadastrosData() {
+    if (!supabaseClient || !currentUserProfile?.clinica_id) return;
+    const cid = currentUserProfile.clinica_id;
+
+    // 1. Planos
+    const { data: planos, error: errPlanos } = await supabaseClient
+        .from('plans')
+        .select('*')
+        .eq('clinica_id', cid)
+        .order('nome');
+
+    if (errPlanos) console.error('Erro ao carregar planos:', errPlanos);
+
+    const listaPlanos = document.getElementById('lista-planos');
+    const selectPlano = document.getElementById('cli-plano-id');
+
+    if (selectPlano) {
+        selectPlano.innerHTML = '<option value="">Sem plano / Avulso</option>' +
+            (planos || []).map((p) => `<option value="${p.id}">${p.nome} (${p.modalidade.toUpperCase()} - R$ ${Number(p.valor).toFixed(2)})</option>`).join('');
+    }
+
+    if (listaPlanos) {
+        listaPlanos.innerHTML = (!planos || planos.length === 0)
+            ? '<p class="text-xs text-inkMuted">Nenhum plano cadastrado.</p>'
+            : planos.map((p) => `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase text-olive">${p.modalidade} • ${p.periodicidade}</span>
+                        <p class="font-bold text-oliveDark">${p.nome}</p>
+                        <p class="text-xs text-inkMuted">${p.qtd_sessoes} sessões • R$ ${Number(p.valor).toFixed(2).replace('.', ',')}</p>
+                    </div>
+                    <button type="button" onclick="deleteCadastroItem('plans', '${p.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal self-start sm:self-center">
+                        Excluir
+                    </button>
+                </div>
+            `).join('');
+    }
+
+    // 2. Terapeutas
+    const { data: terapeutas, error: errTer } = await supabaseClient
+        .from('therapists')
+        .select('*')
+        .eq('clinica_id', cid)
+        .order('nome');
+
+    if (errTer) console.error('Erro ao carregar terapeutas:', errTer);
+
+    const listaTerapeutas = document.getElementById('lista-terapeutas');
+    const selectTerapeuta = document.getElementById('cli-terapeuta-id');
+
+    if (selectTerapeuta) {
+        selectTerapeuta.innerHTML = '<option value="">Selecionar terapeuta...</option>' +
+            (terapeutas || []).map((t) => `<option value="${t.id}">${t.nome}${t.crefito ? ' (' + t.crefito + ')' : ''}</option>`).join('');
+    }
+
+    if (listaTerapeutas) {
+        listaTerapeutas.innerHTML = (!terapeutas || terapeutas.length === 0)
+            ? '<p class="text-xs text-inkMuted">Nenhum terapeuta cadastrado.</p>'
+            : terapeutas.map((t) => `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <p class="font-bold text-oliveDark">${t.nome}</p>
+                            ${t.is_adm ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-olive/15 text-oliveDark">ADM</span>' : ''}
+                        </div>
+                        <p class="text-xs text-inkMuted">${t.email} ${t.crefito ? '• CREFITO: ' + t.crefito : ''} ${t.especialidades ? '• ' + t.especialidades : ''}</p>
+                    </div>
+                    <button type="button" onclick="deleteCadastroItem('therapists', '${t.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal self-start sm:self-center">
+                        Excluir
+                    </button>
+                </div>
+            `).join('');
+    }
+
+    // 3. Clientes
+    const { data: clientes, error: errCli } = await supabaseClient
+        .from('clients')
+        .select('*, plans(nome), therapists(nome)')
+        .eq('clinica_id', cid)
+        .order('nome');
+
+    if (errCli) console.error('Erro ao carregar clientes:', errCli);
+
+    const listaClientes = document.getElementById('lista-clientes');
+    if (listaClientes) {
+        listaClientes.innerHTML = (!clientes || clientes.length === 0)
+            ? '<p class="text-xs text-inkMuted">Nenhum cliente cadastrado.</p>'
+            : clientes.map((c) => `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-2xl bg-cardLight/80 border border-borderWarm">
+                    <div>
+                        <p class="font-bold text-oliveDark">${c.nome}</p>
+                        <p class="text-xs text-inkMuted">${c.email} ${c.telefone ? '• ' + c.telefone : ''}</p>
+                        <p class="text-xs text-olive font-medium mt-0.5">
+                            Plano: ${c.plans?.nome || 'Avulso'} • Terapeuta: ${c.therapists?.nome || 'Não definido'} • Sessões: ${c.sessoes_restantes}
+                        </p>
+                    </div>
+                    <button type="button" onclick="deleteCadastroItem('clients', '${c.id}')" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blush/70 text-oliveDark text-xs font-semibold hover:bg-petal self-start sm:self-center">
+                        Excluir
+                    </button>
+                </div>
+            `).join('');
+    }
+}
+
+async function handleSavePlan(event) {
+    event.preventDefault();
+    if (!supabaseClient || !currentUserProfile?.clinica_id) return;
+
+    const { error } = await supabaseClient.from('plans').insert({
+        clinica_id: currentUserProfile.clinica_id,
+        nome: document.getElementById('pla-nome').value.trim(),
+        modalidade: document.getElementById('pla-modalidade').value,
+        qtd_sessoes: Number(document.getElementById('pla-sessoes').value) || 1,
+        valor: Number(document.getElementById('pla-valor').value) || 0,
+        periodicidade: document.getElementById('pla-periodicidade').value
+    });
+
+    if (error) {
+        showCadastroFeedback('pla-feedback', 'Erro ao salvar plano: ' + error.message, true);
+        return;
+    }
+
+    document.getElementById('form-cad-plano').reset();
+    showCadastroFeedback('pla-feedback', 'Plano cadastrado com sucesso!');
+    loadCadastrosData();
+}
+
+async function handleSaveTherapist(event) {
+    event.preventDefault();
+    if (!supabaseClient || !currentUserProfile?.clinica_id) return;
+
+    const email = document.getElementById('ter-email').value.trim().toLowerCase();
+    const isAdm = document.getElementById('ter-is-adm').checked;
+
+    const { error } = await supabaseClient.from('therapists').insert({
+        clinica_id: currentUserProfile.clinica_id,
+        nome: document.getElementById('ter-nome').value.trim(),
+        email,
+        telefone: document.getElementById('ter-telefone').value.trim() || null,
+        crefito: document.getElementById('ter-crefito').value.trim() || null,
+        especialidades: document.getElementById('ter-especialidades').value.trim() || null,
+        is_adm: isAdm
+    });
+
+    if (error) {
+        showCadastroFeedback('ter-feedback', 'Erro ao salvar terapeuta: ' + error.message, true);
+        return;
+    }
+
+    await supabaseClient
+        .from('profiles')
+        .update({ is_adm: isAdm, tipo_perfil: 'terapeuta' })
+        .eq('email', email)
+        .neq('tipo_perfil', 'super_adm');
+
+    document.getElementById('form-cad-terapeuta').reset();
+    showCadastroFeedback('ter-feedback', 'Terapeuta cadastrado com sucesso!');
+    loadCadastrosData();
+}
+
+async function handleSaveClient(event) {
+    event.preventDefault();
+    if (!supabaseClient || !currentUserProfile?.clinica_id) return;
+
+    const planoId = document.getElementById('cli-plano-id').value || null;
+    const terapeutaId = document.getElementById('cli-terapeuta-id').value || null;
+
+    const { error } = await supabaseClient.from('clients').insert({
+        clinica_id: currentUserProfile.clinica_id,
+        nome: document.getElementById('cli-nome').value.trim(),
+        email: document.getElementById('cli-email').value.trim().toLowerCase(),
+        telefone: document.getElementById('cli-telefone').value.trim() || null,
+        plano_id: planoId,
+        terapeuta_id: terapeutaId,
+        sessoes_restantes: Number(document.getElementById('cli-sessoes').value) || 0,
+        endereco: document.getElementById('cli-endereco').value.trim() || null,
+        observacoes_clinicas: document.getElementById('cli-obs').value.trim() || null
+    });
+
+    if (error) {
+        showCadastroFeedback('cli-feedback', 'Erro ao salvar cliente: ' + error.message, true);
+        return;
+    }
+
+    document.getElementById('form-cad-cliente').reset();
+    showCadastroFeedback('cli-feedback', 'Cliente cadastrado com sucesso!');
+    loadCadastrosData();
+}
+
+async function deleteCadastroItem(table, id) {
+    if (!supabaseClient) return;
+    await supabaseClient.from(table).delete().eq('id', id);
+    loadCadastrosData();
+}
 
 
 
