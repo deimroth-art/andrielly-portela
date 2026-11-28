@@ -507,6 +507,16 @@ async function handleCreatePost(event) {
     const rede = document.getElementById('post-network').value;
     const titulo = document.getElementById('post-title').value.trim();
     const url = document.getElementById('post-url').value.trim();
+   
+   if (url.includes('lnkd.in/')) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Publicar na Vitrine (90 dias)';
+    feedback.textContent = 'Este é um link encurtado (lnkd.in). Abra-o no navegador e copie o endereço completo (linkedin.com/posts/...) da barra superior para que a publicação apareça incorporada na página.';
+    feedback.className = 'p-3 rounded-xl bg-blush/80 border border-petal text-oliveDark text-xs font-medium';
+    feedback.classList.remove('hidden');
+    return;
+}
+    
     const btn = document.getElementById('post-submit-btn');
     const feedback = document.getElementById('post-feedback');
 
