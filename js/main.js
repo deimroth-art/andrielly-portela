@@ -98,6 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+
+
+
+
 async function submitContactForm(event) {
     event.preventDefault();
     const btn = document.getElementById('contact-submit-btn');
@@ -162,6 +166,9 @@ async function submitContactForm(event) {
     }
 }
 
+
+
+
 // --- 4. AUTENTICAÇÃO E GESTÃO DE USUÁRIOS (SUPABASE) ---
 const SUPABASE_URL = 'https://idwtcmdpnolkcnwfrmqp.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_WiIwRGkoNfXJfKOHfSTfwg_kPwbkJLW';
@@ -197,37 +204,58 @@ function toggleAuthView(view) {
     });
 }
 
+
+
+
+
+
+
 async function refreshAuthState() {
     if (!supabaseClient) return;
     const { data: { session } } = await supabaseClient.auth.getSession();
     const navLabel = document.getElementById('nav-login-label');
 
     if (!session) {
+        currentUserProfile = null;
         if (navLabel) navLabel.textContent = 'Área Restrita';
         toggleAuthView('login');
         return;
     }
 
     // Busca os dados e permissões do perfil logado na tabela profiles
-const { data: profile, error: profileError } = await supabaseClient
-    .from('profiles')
-    .select('nome, tipo_perfil, is_adm, is_master, clinica_id')
-    .eq('id', session.user.id)
-    .single();
+    const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('nome, tipo_perfil, is_adm, is_master, clinica_id')
+        .eq('id', session.user.id)
+        .single();
 
-console.log('Perfil carregado:', profile, 'Erro:', profileError);
+    console.log('Perfil carregado:', profile, 'Erro:', profileError);
 
-    const isMaster = profile?.is_master === true;
-    const isAdm = profile?.is_adm === true || profile?.tipo_perfil === 'super_adm';
+    currentUserProfile = profile || null;
+
+    if (currentUserProfile && !currentUserProfile.clinica_id) {
+        const { data: fallbackClinica } = await supabaseClient
+            .from('clinicas')
+            .select('id')
+            .eq('slug', 'andrielly-portela')
+            .single();
+
+        if (fallbackClinica) {
+            currentUserProfile.clinica_id = fallbackClinica.id;
+        }
+    }
+
+    const isMaster = currentUserProfile?.is_master === true;
+    const isAdm = currentUserProfile?.is_adm === true || currentUserProfile?.tipo_perfil === 'super_adm';
 
     let badgeTexto = 'Cliente';
-    if (profile?.tipo_perfil === 'super_adm') badgeTexto = 'Super ADM / Master';
+    if (currentUserProfile?.tipo_perfil === 'super_adm') badgeTexto = 'Super ADM / Master';
     else if (isAdm) badgeTexto = isMaster ? 'ADM Master' : 'Terapeuta ADM';
-    else if (profile?.tipo_perfil === 'terapeuta') badgeTexto = 'Terapeuta';
+    else if (currentUserProfile?.tipo_perfil === 'terapeuta') badgeTexto = 'Terapeuta';
 
     if (navLabel) navLabel.textContent = isAdm ? 'Painel ADM' : 'Minha Conta';
-    document.getElementById('logged-user-email').textContent = profile?.nome
-        ? `${profile.nome} (${session.user.email})`
+    document.getElementById('logged-user-email').textContent = currentUserProfile?.nome
+        ? `${currentUserProfile.nome} (${session.user.email})`
         : session.user.email;
     document.getElementById('logged-user-role').textContent = badgeTexto;
 
@@ -235,21 +263,15 @@ console.log('Perfil carregado:', profile, 'Erro:', profileError);
     if (masterPanel) masterPanel.classList.toggle('hidden', !isMaster);
 
     toggleAuthView('account');
-   currentUserProfile = profile;
 }
-currentUserProfile = profile || null;
 
-if (currentUserProfile && !currentUserProfile.clinica_id) {
-    const { data: fallbackClinica } = await supabaseClient
-        .from('clinicas')
-        .select('id')
-        .eq('slug', 'andrielly-portela')
-        .single();
 
-    if (fallbackClinica) {
-        currentUserProfile.clinica_id = fallbackClinica.id;
-    }
-}
+
+
+
+
+
+
 async function handleSupabaseLogin(event) {
     event.preventDefault();
     if (!supabaseClient) return;
@@ -278,6 +300,14 @@ async function handleSupabaseLogin(event) {
     document.getElementById('login-form').reset();
     await refreshAuthState();
 }
+
+
+
+
+
+
+
+
 
 async function handleMasterPasswordReset(event) {
     event.preventDefault();
@@ -310,6 +340,12 @@ async function handleMasterPasswordReset(event) {
     }
     feedback.classList.remove('hidden');
 }
+
+
+
+
+
+
 
 async function handleSupabaseLogout() {
     if (!supabaseClient) return;
@@ -372,6 +408,12 @@ function switchSystemTab(tabName) {
         document.getElementById('sys-view-placeholder')?.classList.remove('hidden');
     }
 }
+
+
+
+
+
+
 
 async function renderDashboardForRole() {
     if (!currentUserProfile || !supabaseClient) return;
@@ -442,6 +484,14 @@ async function renderDashboardForRole() {
     }
 }
 
+
+
+
+
+
+
+
+
 async function loadClientSummary() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) return;
@@ -479,6 +529,16 @@ async function loadClientSummary() {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
 async function handleCreatePost(event) {
     event.preventDefault();
     if (!supabaseClient || !currentUserProfile?.clinica_id) return;
@@ -515,6 +575,18 @@ async function handleCreatePost(event) {
     }
     feedback.classList.remove('hidden');
 }
+
+
+
+
+
+
+
+
+
+
+
+
 async function loadAdminPosts() {
     const listEl = document.getElementById('admin-posts-list');
     if (!listEl || !supabaseClient) return;
@@ -565,6 +637,16 @@ async function loadAdminPosts() {
     }).join('');
 }
 
+
+
+
+
+
+
+
+
+
+
 async function deletePost(postId) {
     if (!supabaseClient) return;
     await supabaseClient.from('posts').delete().eq('id', postId);
@@ -603,6 +685,22 @@ function buildSocialEmbedUrl(rede, rawUrl) {
     }
     return null;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 async function loadPublicPosts() {
     const container = document.getElementById('blog-posts-container');
     if (!container || !supabaseClient) return;
