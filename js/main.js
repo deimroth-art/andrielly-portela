@@ -232,7 +232,56 @@ async function refreshAuthState() {
 
 
 
+function handleAccessPanelClick() {
+    if (!currentUserProfile) return;
+    openSystemPanel();
+}
 
+function setPublicChromeVisible(isVisible) {
+    document.querySelectorAll('.public-site-chrome').forEach((el) => {
+        el.classList.toggle('hidden', !isVisible);
+    });
+}
+
+function openSystemPanel() {
+    setPublicChromeVisible(false);
+
+    document.querySelectorAll('.page-section').forEach((sec) => {
+        sec.classList.add('hidden');
+    });
+
+    const systemSection = document.getElementById('app-system-section');
+    if (systemSection) {
+        systemSection.classList.remove('hidden');
+    }
+
+    if (typeof switchSystemTab === 'function') {
+        switchSystemTab('dashboard');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function handleSystemLogout() {
+    if (supabaseClient?.auth) {
+        await supabaseClient.auth.signOut();
+    }
+
+    if (typeof currentUserProfile !== 'undefined') {
+        currentUserProfile = null;
+    }
+
+    const systemSection = document.getElementById('app-system-section');
+    if (systemSection) {
+        systemSection.classList.add('hidden');
+    }
+
+    setPublicChromeVisible(true);
+
+    if (typeof switchPage === 'function') {
+        switchPage('home');
+    }
+}
 
 
 
