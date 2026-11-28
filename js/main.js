@@ -359,7 +359,11 @@ document.addEventListener('DOMContentLoaded', refreshAuthState);
 document.addEventListener('DOMContentLoaded', () => {
     const yearEl = document.getElementById('current-year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
-    renderBlogPosts();
+    refreshAuthState();
+    loadPublicPosts();
+});
+
+
 });
 // --- 5. DASHBOARD INTERNO, PERMISSÕES E POSTS (90 DIAS) ---
 let currentUserProfile = null;
