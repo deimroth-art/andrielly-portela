@@ -267,9 +267,12 @@ async function handleSystemLogout() {
         await supabaseClient.auth.signOut();
     }
 
-    if (typeof currentUserProfile !== 'undefined') {
-        currentUserProfile = null;
-    }
+    currentUserProfile = null;
+    closeLoginModal();
+
+    const navLabel = document.getElementById('nav-login-label');
+    if (navLabel) navLabel.textContent = 'Área Restrita';
+    toggleAuthView('login');
 
     const systemSection = document.getElementById('app-system-section');
     if (systemSection) {
@@ -279,10 +282,9 @@ async function handleSystemLogout() {
     setPublicChromeVisible(true);
 
     if (typeof switchPage === 'function') {
-        switchPage('home');
+        switchPage('curriculo');
     }
 }
-
 
 
 async function handleSupabaseLogin(event) {
@@ -366,13 +368,16 @@ async function handleSupabaseLogout() {
     await refreshAuthState();
 }
 
-document.addEventListener('DOMContentLoaded', refreshAuthState);
 
 // --- 4. INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
     const yearEl = document.getElementById('current-year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
-    renderBlogPosts();
+    refreshAuthState();
+    if (typeof loadPublicPosts === 'function') {
+        loadPublicPosts();
+    }
+});
 });
 // --- 5. DASHBOARD INTERNO, PERMISSÕES E POSTS (90 DIAS) ---
 let currentUserProfile = null;
@@ -380,6 +385,7 @@ let currentUserProfile = null;
 function enterSystemDashboard(loadedProfile = null) {
     if (loadedProfile) currentUserProfile = loadedProfile;
     closeLoginModal();
+    setPublicChromeVisible(false);
 
     ['page-curriculo', 'page-blog', 'page-contato'].forEach((id) => {
         document.getElementById(id)?.classList.add('hidden');
