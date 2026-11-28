@@ -242,7 +242,12 @@ async function handleAccessPanelClick() {
     if (!currentUserProfile && supabaseClient) {
         await refreshAuthState();
     }
-    openSystemPanel();
+    await openSystemPanel();
+}
+
+// Compatibilidade com o clique do botão "Abrir Painel do Sistema" no index.html
+async function enterSystemDashboard() {
+    await handleAccessPanelClick();
 }
 
 // Mostra ou esconde elementos visuais exclusivos da vitrine pública (cabeçalho e marca d'água)
